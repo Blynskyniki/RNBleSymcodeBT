@@ -1,0 +1,4 @@
+include ':SymCode'
+include ':app'
+project(':SymCode').projectDir = new File(rootDir, 'SymCodeLib/')
+rootProject.name = "BT_CymCode"
