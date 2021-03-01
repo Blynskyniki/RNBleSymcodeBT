@@ -24,6 +24,7 @@ import com.clj.fastble.data.BleDevice
 import org.jetbrains.anko.toast
 import ru.lad24.lib.BleSymcode
 import ru.lad24.lib.BleSymcode.onNotifyEnableResult
+import trikita.anvil.Anvil
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.BaseDSL.layoutGravity
 import trikita.anvil.BaseDSL.weight
@@ -37,52 +38,18 @@ import kotlin.collections.ArrayList
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE_OPEN_GPS = 1
     private val REQUEST_CODE_PERMISSION_LOCATION = 2
-    private var symcode: BleSymcode? = null;
+    private var symcode: BleSymcode? = null
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
         checkPermissions()
-        symcode = BleSymcode(getApplication()!!);
+        symcode = BleSymcode(application!!)
         setContentView(this.Scanview(this))
     }
 
     fun Scanview(cntx: Context): RenderableView {
-
+        val list = mutableListOf<BleDevice>()
         return object : RenderableView(cntx) {
             override fun view() {
-
-                linearLayout {
-                    minHeight(dip(72))
-                    orientation(LinearLayout.VERTICAL)
-                    text("Выполните сканирование устройств")
-                    button {
-                        layoutGravity(CENTER_VERTICAL)
-                        text("Scan")
-                        onClick { v ->
-                            symcode?.scan { err, scanResultList ->
-                                if (err !== null) {
-                                    err?.message?.let { toast(it) }
-                                }
-
-
-                                setContentView(Selectview(cntx, scanResultList))
-
-
-                            }
-
-                        }
-                    }
-
-
-                }
-            }
-        }
-    }
-
-    fun Selectview(cntx: Context, list: List<BleDevice?>?): RenderableView {
-
-        return object : RenderableView(cntx) {
-            override fun view() {
-
                 val mBtList = RenderableAdapter.withItems(
                     list
                 ) { i: Int, device: BleDevice? ->
@@ -94,7 +61,7 @@ class MainActivity : AppCompatActivity() {
                             linearLayout {
 
                                 linearLayout {
-                                    orientation(LinearLayout.VERTICAL);
+                                    orientation(LinearLayout.VERTICAL)
                                     textView {
 //                                    size(0, WRAP)
 //                                    weight(1f)
@@ -113,7 +80,7 @@ class MainActivity : AppCompatActivity() {
                                             text(device.mac)
                                         }
                                     }
-                           
+
                                 }
 
                                 button {
@@ -125,7 +92,8 @@ class MainActivity : AppCompatActivity() {
                                         symcode!!.connect(device!!) { success ->
                                             if (success) {
 
-                                                symcode!!.enableNotify(device!!,
+                                                symcode!!.enableNotify(
+                                                    device,
                                                     object : onNotifyEnableResult {
                                                         override fun result(error: Exception?) {
                                                             toast("нотификация включена)")
@@ -164,20 +132,34 @@ class MainActivity : AppCompatActivity() {
                     }
 
                 }
-                mBtList.notifyDataSetChanged();
                 linearLayout {
-                    size(MATCH, MATCH)
-                    padding(dip(8))
+                    minHeight(dip(72))
                     orientation(LinearLayout.VERTICAL)
+                    text("Выполните сканирование устройств")
                     button {
-                        size(FILL, WRAP)
-                        padding(dip(5))
-                        text("Back")
+                        layoutGravity(CENTER_VERTICAL)
+                        text("Scan")
+                        onClick { v ->
 
-                        onClick { v -> setContentView(Scanview(cntx)) }
+                            symcode?.scanv2(object : BleSymcode.onScanBtDevicesResult {
+                                override fun result(
+                                    error: Exception?,
+                                    scanResultList: List<BleDevice?>?
+                                ) {
+                                    toast("Сканирование завершено")
+                                }
+
+                                override fun foundNewDevice(bleDevice: BleDevice?) {
+                                    bleDevice.let {
+                                        it?.let { it1 -> list.add(it1) }
+                                        Anvil.render()
+                                    }
+                                }
+
+                            })
+
+                        }
                     }
-                    text("Select device")
-
 
                     listView {
                         size(FILL, WRAP)
@@ -191,6 +173,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
     private fun checkPermissions() {
         val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -220,13 +203,10 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
-
     private fun checkGPSIsOpen(): Boolean {
         val locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager
-            ?: return false
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
-
     private fun onPermissionGranted(permission: String) {
         when (permission) {
             Manifest.permission.ACCESS_FINE_LOCATION -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !checkGPSIsOpen()) {
@@ -249,18 +229,6 @@ class MainActivity : AppCompatActivity() {
 
 }
 
-
-fun scan() {
-
-}
-
-fun log(data: String?) {
-    data?.let {
-
-        Log.w("Symcode", data)
-    }
-
-}
 
 //        setContentView(object : RenderableView(this) {
 //            override fun view() {

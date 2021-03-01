@@ -15,14 +15,22 @@ import com.clj.fastble.exception.BleException
 class BleSymcode(app: Application?) {
     companion object {
         val TAG = "BleSymcodeBT"
-        val NOTIFY_SERVICE_ID = 40;
-        fun l(s: String) {
-            Log.d(TAG, s)
+        val NOTIFY_SERVICE_ID = 40
+        fun log(data: String) {
+            Log.d(TAG, data)
         }
     }
 
+    // Notify callback
     interface onNotifyEnableResult {
         fun result(error: Exception?)
+    }
+
+    // Scan callback
+    interface onScanBtDevicesResult {
+        fun result(error: Exception?, scanResultList: List<BleDevice?>?)
+        fun foundNewDevice(bleDevice: BleDevice?)
+
     }
 
     private var notifyDevice: BleDevice? = null
@@ -30,28 +38,28 @@ class BleSymcode(app: Application?) {
     private var notifyServiceCharacteristicsUuid: String? = null
 
     init {
-        BleManager.getInstance().init(app);
+
+        BleManager.getInstance().init(app)
         BleManager.getInstance()
             .enableLog(true)
             .setReConnectCount(1, 5000)
             .setSplitWriteNum(20)
-            .setConnectOverTime(10000)
-            .setOperateTimeout(5000);
+            .setConnectOverTime(10000).operateTimeout = 5000
     }
 
 
-    fun scan(cb: (error: Exception?, scanResultList: List<BleDevice?>?) -> Unit) {
+    private fun scan(cb: (error: Exception?, scanResultList: List<BleDevice?>?) -> Unit) {
         BleManager.getInstance().scan(object : BleScanCallback() {
             override fun onScanStarted(success: Boolean) {
-                l("start scan$success")
+                log("start scan$success")
             }
 
             override fun onScanning(bleDevice: BleDevice?) {
-                bleDevice?.name?.let { l(it) }
+                bleDevice?.name?.let { log(it) }
             }
 
             override fun onScanFinished(scanResultList: List<BleDevice?>?) {
-                l("finish ${scanResultList?.size}")
+                log("finish ${scanResultList?.size}")
                 if (scanResultList !== null) {
 //                     clear empty names BT devices
                     val data = scanResultList.filter { it?.name !== null }
@@ -63,21 +71,51 @@ class BleSymcode(app: Application?) {
         })
     }
 
+    fun scanv2(l: onScanBtDevicesResult) {
+        BleManager.getInstance().scan(object : BleScanCallback() {
+            override fun onScanStarted(success: Boolean) {
+                log("start scan$success")
+            }
+
+            override fun onScanning(bleDevice: BleDevice?) {
+
+                bleDevice?.name?.let {
+                    l.foundNewDevice(bleDevice)
+                    log(it)
+
+                }
+            }
+
+            override fun onScanFinished(scanResultList: List<BleDevice?>?) {
+                log("finish ${scanResultList?.size}")
+                if (scanResultList !== null) {
+                    // clear empty names BT devices
+                    val data = scanResultList.filter { it?.name !== null }
+                    l.result(null, data)
+                } else {
+                    l.result(Resources.NotFoundException(), null)
+                }
+            }
+        })
+    }
+
     fun connect(bleDevice: BleDevice, cb: (success: Boolean) -> Unit) {
-        val isConnected = BleManager.getInstance().isConnected(bleDevice);
-        val name = bleDevice.getName();
-        val mac = bleDevice.getMac();
-        val rssi = bleDevice.getRssi();
-        l("connect:$isConnected : $name ->> $mac --> $rssi")
+        val isConnected = BleManager.getInstance().isConnected(bleDevice)
+        val name = bleDevice.name
+        val mac = bleDevice.mac
+        val rssi = bleDevice.rssi
+
+
         if (!BleManager.getInstance().isConnected(bleDevice)) {
+            log("connect:$isConnected : $name ->> $mac --> $rssi")
+
             BleManager.getInstance().connect(bleDevice, object : BleGattCallback() {
                 override fun onStartConnect() {
-                    l("onStartConnect")
-
+                    log("Start connect")
                 }
 
                 override fun onConnectFail(bleDevice: BleDevice, exception: BleException) {
-                    l("onConnectFail")
+                    log("Fail connect to device ${exception.description}")
                     cb(false)
                 }
 
@@ -86,7 +124,7 @@ class BleSymcode(app: Application?) {
                     gatt: BluetoothGatt,
                     status: Int
                 ) {
-                    l("onConnectSuccess")
+                    log("Connect successful ${bleDevice.mac} $status")
                     cb(true)
 
                 }
@@ -97,7 +135,7 @@ class BleSymcode(app: Application?) {
                     gatt: BluetoothGatt,
                     status: Int
                 ) {
-                    l("onConnectSuccess")
+                    log("Device disconnected ${bleDevice.mac} $status")
 
                 }
             })
@@ -118,7 +156,7 @@ class BleSymcode(app: Application?) {
                 notifyService.characteristics[0].uuid.toString(),
                 object : BleNotifyCallback() {
                     override fun onNotifySuccess() {
-                        l("onNotifySuccess")
+                        log("onNotifySuccess")
                         this@BleSymcode.notifyDevice = bleDevice
                         this@BleSymcode.notifyServiceUuid = notifyService.uuid.toString()
                         this@BleSymcode.notifyServiceCharacteristicsUuid =
@@ -128,12 +166,12 @@ class BleSymcode(app: Application?) {
                     }
 
                     override fun onNotifyFailure(exception: BleException) {
-                        l("onNotifyFailure")
+                        log("onNotifyFailure")
                         resultCb.result(exception as Exception)
                     }
 
                     override fun onCharacteristicChanged(data: ByteArray) {
-                        l("onCharacteristicChanged--> ${data.decodeToString()}")
+                        log("onCharacteristicChanged--> ${data.decodeToString()}")
                         notifyCb(data.decodeToString())
                     }
                 })
@@ -152,7 +190,7 @@ class BleSymcode(app: Application?) {
         BleManager.getInstance().disconnect(
             notifyDevice,
         )
-        l("Device $notifyServiceUuid ->disconected")
+        log("Device $notifyServiceUuid -> disconected")
         this@BleSymcode.notifyDevice = null
         this@BleSymcode.notifyServiceUuid = null
         this@BleSymcode.notifyServiceCharacteristicsUuid = null
@@ -170,16 +208,10 @@ class BleSymcode(app: Application?) {
             notifyServiceUuid,
             notifyServiceCharacteristicsUuid
         )
+        log("Device $notifyServiceUuid -> notify disabled")
         this@BleSymcode.notifyDevice = null
         this@BleSymcode.notifyServiceUuid = null
         this@BleSymcode.notifyServiceCharacteristicsUuid = null
     }
 
 }
-//if ((btn.getText().toString() == getActivity().getString(R.string.open_notification))){
-//    btn.setText(getActivity().getString(R.string.close_notification))
-
-//} else {
-//    btn.setText(getActivity().getString(R.string.open_notification))
-
-//}
