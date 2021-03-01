@@ -21,6 +21,10 @@ class BleSymcode(app: Application?) {
         }
     }
 
+    interface onNotifyEnableResult {
+        fun result(error: Exception?)
+    }
+
     private var notifyDevice: BleDevice? = null
     private var notifyServiceUuid: String? = null
     private var notifyServiceCharacteristicsUuid: String? = null
@@ -102,7 +106,7 @@ class BleSymcode(app: Application?) {
 
     fun enableNotify(
         bleDevice: BleDevice,
-        resultCb: (err: Exception?) -> Unit,
+        resultCb: onNotifyEnableResult,
         notifyCb: (message: String) -> Unit
     ) {
         val services = BleManager.getInstance().getBluetoothGatt(bleDevice).services
@@ -120,12 +124,12 @@ class BleSymcode(app: Application?) {
                         this@BleSymcode.notifyServiceCharacteristicsUuid =
                             notifyService.characteristics[0].uuid.toString()
 
-                        resultCb(null)
+                        resultCb.result(null)
                     }
 
                     override fun onNotifyFailure(exception: BleException) {
                         l("onNotifyFailure")
-                        resultCb(exception as Exception)
+                        resultCb.result(exception as Exception)
                     }
 
                     override fun onCharacteristicChanged(data: ByteArray) {
@@ -134,11 +138,26 @@ class BleSymcode(app: Application?) {
                     }
                 })
         } else {
-            resultCb(Resources.NotFoundException("Notify service not found"))
+            resultCb.result(Resources.NotFoundException("Notify service not found"))
 
         }
     }
 
+    fun disconnect() {
+        BleManager.getInstance().stopNotify(
+            notifyDevice,
+            notifyServiceUuid,
+            notifyServiceCharacteristicsUuid
+        )
+        BleManager.getInstance().disconnect(
+            notifyDevice,
+        )
+        l("Device $notifyServiceUuid ->disconected")
+        this@BleSymcode.notifyDevice = null
+        this@BleSymcode.notifyServiceUuid = null
+        this@BleSymcode.notifyServiceCharacteristicsUuid = null
+
+    }
 
     private fun isNotifyCharacteristic(prop: Int): Boolean {
         val merge = prop.and(BluetoothGattCharacteristic.PROPERTY_NOTIFY)

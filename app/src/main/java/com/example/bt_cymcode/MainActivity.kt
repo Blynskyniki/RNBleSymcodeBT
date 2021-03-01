@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat
 import com.clj.fastble.data.BleDevice
 import org.jetbrains.anko.toast
 import ru.lad24.lib.BleSymcode
+import ru.lad24.lib.BleSymcode.onNotifyEnableResult
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.BaseDSL.layoutGravity
 import trikita.anvil.BaseDSL.weight
@@ -63,8 +64,7 @@ class MainActivity : AppCompatActivity() {
                                 }
 
 
-                                    setContentView(Selectview(cntx, scanResultList))
-
+                                setContentView(Selectview(cntx, scanResultList))
 
 
                             }
@@ -91,50 +91,73 @@ class MainActivity : AppCompatActivity() {
                         linearLayout {
                             size(FILL, WRAP)
                             minHeight(dip(72))
-                            textView {
-                                size(0, WRAP)
-                                weight(1f)
-                                layoutGravity(CENTER_VERTICAL)
-                                padding(dip(5))
+                            linearLayout {
 
-                                text(device?.name.orEmpty())
+                                linearLayout {
+                                    orientation(LinearLayout.VERTICAL);
+                                    textView {
+//                                    size(0, WRAP)
+//                                    weight(1f)
+//                                    layoutGravity(CENTER_VERTICAL)
+//                                    padding(dip(5))
 
-                            }
-                            textView {
-                                size(0, WRAP)
-                                weight(1f)
-                                layoutGravity(CENTER_VERTICAL)
-                                padding(dip(5))
-                                if (device != null) {
-                                    text(device.mac)
-                                }
-                            }
-                            textView {
-                                size(0, WRAP)
-                                weight(1f)
-                                layoutGravity(CENTER_VERTICAL)
-                                padding(dip(5))
-                                if (device != null) {
-                                    text(device.key)
-                                }
-                            }
-                            button {
-                                size(0, WRAP)
-                                weight(1f)
-                                layoutGravity(CENTER_VERTICAL)
-                                text("ТЫК")
-                                onClick { v ->
-                                    symcode!!.connect(device!!){ success ->
-                                    if(success){
-                                        toast("Урааа :)")
-                                        symcode!!.enableNotify(device!!)
-                                    }else{
-                                        toast("Печалька :(")
-                                    }
+                                        text(device?.name.orEmpty())
 
                                     }
+                                    textView {
+//                                    size(0, WRAP)
+//                                    weight(1f)
+//                                    layoutGravity(CENTER_VERTICAL)
+//                                    padding(dip(5))
+                                        if (device != null) {
+                                            text(device.mac)
+                                        }
+                                    }
+                           
+                                }
 
-                                }}
+                                button {
+                                    size(0, WRAP)
+                                    weight(1f)
+                                    layoutGravity(CENTER_VERTICAL)
+                                    text("ВКЛ")
+                                    onClick { v ->
+                                        symcode!!.connect(device!!) { success ->
+                                            if (success) {
+
+                                                symcode!!.enableNotify(device!!,
+                                                    object : onNotifyEnableResult {
+                                                        override fun result(error: Exception?) {
+                                                            toast("нотификация включена)")
+                                                        }
+
+
+                                                    }) {
+
+                                                    toast("Code : $it")
+
+                                                }
+                                            } else {
+                                                toast("Печалька :(")
+                                            }
+
+                                        }
+
+                                    }
+                                }
+                                button {
+                                    size(0, WRAP)
+                                    weight(1f)
+                                    layoutGravity(CENTER_VERTICAL)
+                                    text("ОТКЛ")
+                                    onClick { v ->
+                                        symcode.let {
+                                            it?.disconnect()
+                                        }
+
+                                    }
+                                }
+                            }
 
                         }
 
