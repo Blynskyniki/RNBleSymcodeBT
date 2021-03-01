@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.bt_cymcode">
+    package="com.lad24.testSymcode">
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -12,7 +12,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BT_CymCode">
-        <activity android:name=".MainActivity">
+        <activity android:name="com.lad24.testSymcode.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
