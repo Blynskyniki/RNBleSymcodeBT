@@ -1,5 +1,0 @@
-include ':symcode'
-//include ':SymCode'
-include ':app'
-project(':symcode').projectDir = new File(rootDir, 'symcode/')
-rootProject.name = "BT_CymCode"
