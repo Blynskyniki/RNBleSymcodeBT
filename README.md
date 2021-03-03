@@ -18,16 +18,16 @@ import Symcode from "rn-symcode-bt";
 /**
  * Methods:
  */
-public async scanDevices(): Promise<Device[]>
-public async connect(mac: string): Promise<boolean>
-public async disconnect(): Promise<void>
-public async enableNotify(eventFn: (data: Record<'barcode', string>) => Promise<void>): Promise<void>
-public async disableNotify(): Promise<void>
+export declare type Device = Record<'name' | 'mac', string>;
+export default class Symcode {
+  scanDevices(): Promise<Device[]>;
+  connect(mac: string): Promise<boolean>;
+  disconnect(): Promise<void>;
+  enableNotify(eventFn: (data: Record<'barcode', string>) => Promise<void>): Promise<void>;
+  disableNotify(): Promise<void>;
+}
 ```
 
-## Contributing
-
-See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
 
 ## License
 
