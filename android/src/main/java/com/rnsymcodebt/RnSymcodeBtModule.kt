@@ -1,6 +1,7 @@
 package com.rnsymcodebt
 
 import android.app.Application
+import android.util.Log
 import androidx.annotation.Nullable
 import com.clj.fastble.data.BleDevice
 import com.facebook.react.bridge.*
@@ -9,12 +10,16 @@ import ru.lad24.Symcode
 
 class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
-  val driver by lazy { Symcode(reactContext as Application) }
+  val driver by lazy { Symcode(reactContext.applicationContext as Application) }
   val devices: HashMap<String, BleDevice> = hashMapOf()
   override fun getName(): String {
     return "RnSymcodeBt"
   }
+  private val TAG = "BLE-Symcode"
 
+  fun log(data: String) {
+    Log.d(TAG, data)
+  }
   companion object {
     const val BARCODE_SCAN_NOTIFY_EVENT_NAME = "BARCODE_SCAN_NOTIFY_EVENT"
   }
@@ -38,7 +43,7 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
         scanResultList: List<BleDevice?>?
       ) {
         if (scanResultList != null) {
-          val mutableList = mutableListOf<WritableMap>()
+          val mutableList = WritableNativeArray()
           scanResultList.forEach {
             if (it != null) {
               devices.set(it.mac, it)
@@ -46,13 +51,13 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
               val map = Arguments.createMap()
               map.putString("name", it.name.orEmpty())
               map.putString("mac", it.mac)
-              mutableList.add(map)
+              mutableList.pushMap(map)
             }
-
           }
+          log("$mutableList")
           promise.resolve(mutableList)
         } else {
-          promise.resolve(mutableListOf<WritableMap>())
+          promise.resolve(WritableNativeArray())
         }
       }
 
@@ -93,7 +98,7 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
     }) {
       val map = Arguments.createMap()
       map.putString("barcode", it)
-      sendEvent(this.reactApplicationContext, "BARCODE_SCAN_NOTIFY_EVENT_NAME", map)
+      sendEvent(this.reactApplicationContext, BARCODE_SCAN_NOTIFY_EVENT_NAME, map)
 
     }
   }
