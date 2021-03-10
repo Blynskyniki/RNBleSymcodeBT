@@ -1,6 +1,6 @@
 {
   "name": "rn-symcode-bt",
-  "version": "0.1.19",
+  "version": "0.1.21",
   "description": "React native library from Symcode barcodes scaner",
   "main": "dist/src/index.js",
   "publishConfig": {

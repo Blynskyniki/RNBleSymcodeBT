@@ -1,0 +1,7 @@
+include ':testApp'//include ':symcode'
+include ':RNSymcode'
+include ':app'
+//project(':symcode').projectDir = new File(rootDir, 'symcode/')
+project(':RNSymcode').projectDir = new File(rootDir, '../android')
+project(':testApp').projectDir = new File(rootDir, './TestApp/app/')
+rootProject.name = "RNSymcode"
