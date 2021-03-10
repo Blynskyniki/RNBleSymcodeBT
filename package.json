@@ -1,32 +1,34 @@
 {
   "name": "rn-symcode-bt",
-  "version": "0.1.4",
+  "version": "0.1.19",
   "description": "React native library from Symcode barcodes scaner",
-  "main": "dist/src/index.ts",
-  "react-native": "src/index",
-  "source": "src/index",
+  "main": "dist/src/index.js",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
   "scripts": {
     "test": "jest",
-    "typescript": "tsc --noEmit",
-    "build": "rm -rf ./dist &&  tsc",
-    "pub": "npm run build && npm publish --registry https://npm.kari.com"
+    "typescript": "tsc",
+    "build": "rm -rf ./dist && npm run typescript",
+    "vUp": "npm --no-git-tag-version version patch",
+    "prepare": "npm run build && npm run vUp",
+    "prepublish": "npm run prepare"
   },
   "keywords": [
     "symcode",
     "react-native",
-    "ios",
     "android"
   ],
   "repository": "https://github.com/Blynskyniki/RNBleSymcodeBT",
   "author": "Blynskyniki <blynskyniki@gmail.com> (https://github.com/Blynskyniki)",
+  "contributors": [
+    "Petrova Ksenia <ksututa@gmail.com> (https://github.com/petrovakd)"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Blynskyniki/RNBleSymcodeBT/issues"
   },
   "homepage": "https://github.com/Blynskyniki/RNBleSymcodeBT#readme",
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
-  },
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
