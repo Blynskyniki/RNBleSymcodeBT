@@ -5,7 +5,7 @@ const android = NativeModules.RnSymcodeBt;
 
 jest.mock('react-native')
 
-
+const spy = jest.spyOn(Symcode.prototype,'connect')
 describe('tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -16,6 +16,8 @@ describe('tests', () => {
 
     const instance =  new Symcode();
     await instance.connect('fake_mac');
+
+    expect(spy).toBeCalled()
 
 
   })
