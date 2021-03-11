@@ -1,13 +1,12 @@
 import { DeviceEventEmitter, NativeModules } from 'react-native';
 
-
 const android = NativeModules.RnSymcodeBt;
 
 const BARCODE_SCAN_NOTIFY_EVENT_NAME = 'BARCODE_SCAN_NOTIFY_EVENT';
 
 export type  Device = Record<'name' | 'mac', string>;
 
-class SymcodeDriver {
+export default class SymcodeDriver {
 
   public async scanDevices(): Promise<Device[]> {
     return android.scanDevices();
@@ -33,6 +32,3 @@ class SymcodeDriver {
     DeviceEventEmitter.removeAllListeners(BARCODE_SCAN_NOTIFY_EVENT_NAME);
   }
 }
-
-
-export default new SymcodeDriver();
