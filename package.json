@@ -1,18 +1,17 @@
 {
   "name": "rn-symcode-bt",
-  "version": "0.1.21",
+  "version": "0.1.48",
   "description": "React native library from Symcode barcodes scaner",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest ./src",
     "typescript": "tsc",
     "build": "rm -rf ./dist && npm run typescript",
     "vUp": "npm --no-git-tag-version version patch",
-    "prepare": "npm run build && npm run vUp",
-    "prepublish": "npm run prepare"
+    "prepublish": "npm run build && npm run vUp"
   },
   "keywords": [
     "symcode",
@@ -30,24 +29,20 @@
   },
   "homepage": "https://github.com/Blynskyniki/RNBleSymcodeBT#readme",
   "peerDependencies": {
-    "react": "*",
     "react-native": "*"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.13",
+    "@types/jest": "26.0.20",
     "@types/node": "^12.6.8",
-    "jest": "^24.8.0",
+    "jest": "26.6.3",
     "react-native": "^0.55.3",
-    "ts-jest": "^24.0.2",
+    "ts-jest": "26.5.3",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.10.0",
     "typescript": "^4.1.3"
   },
   "jest": {
-    "preset": "react-native",
-    "modulePathIgnorePatterns": [
-      "<rootDir>/example/node_modules",
-      "<rootDir>/lib/"
-    ]
+    "preset": "ts-jest",
+    "testEnvironment": "node"
   }
 }
