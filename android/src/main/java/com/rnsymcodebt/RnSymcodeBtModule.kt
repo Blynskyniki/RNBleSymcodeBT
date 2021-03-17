@@ -1,6 +1,7 @@
 package com.rnsymcodebt
 
 import android.app.Application
+import android.bluetooth.BluetoothAdapter
 import android.util.Log
 import androidx.annotation.Nullable
 import com.clj.fastble.data.BleDevice
@@ -34,6 +35,12 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
       .emit(eventName, params)
   }
 
+  @ReactMethod
+  fun enableBluetooth(promise: Promise) {
+    val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+    bluetoothAdapter.enable()
+    promise.resolve(true)
+  }
 
   @ReactMethod
   fun scanDevices(promise: Promise) {

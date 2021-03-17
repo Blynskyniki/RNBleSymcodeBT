@@ -52,7 +52,7 @@ class Symcode(app: Application) {
   fun scan(l: OnScanBtDevicesResult) {
     BleManager.getInstance().scan(object : BleScanCallback() {
       override fun onScanStarted(success: Boolean) {
-        log("start scan$success")
+        log("start scan $success")
       }
 
       override fun onScanning(bleDevice: BleDevice?) {

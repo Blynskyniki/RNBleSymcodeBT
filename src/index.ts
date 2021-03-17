@@ -7,6 +7,9 @@ const BARCODE_SCAN_NOTIFY_EVENT_NAME = 'BARCODE_SCAN_NOTIFY_EVENT';
 export type  Device = Record<'name' | 'mac', string>;
 
 export default class SymcodeDriver {
+  public async enableBluetooth(): Promise<boolean> {
+    return android.enableBluetooth();
+  }
 
   public async scanDevices(): Promise<Device[]> {
     return android.scanDevices();
