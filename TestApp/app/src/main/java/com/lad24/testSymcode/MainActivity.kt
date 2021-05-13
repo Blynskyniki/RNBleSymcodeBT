@@ -2,170 +2,140 @@ package com.lad24.testSymcode
 
 
 import android.Manifest
+import android.app.Application
 import android.bluetooth.BluetoothAdapter
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.View
-import android.widget.AdapterView
-import android.widget.LinearLayout
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.material.*
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.clj.fastble.data.BleDevice
-import org.jetbrains.anko.toast
-import ru.lad24.Symcode
-import ru.lad24.Symcode.OnNotifyEnabledResult
-import trikita.anvil.Anvil
-import trikita.anvil.BaseDSL.WRAP
-import trikita.anvil.BaseDSL.layoutGravity
-import trikita.anvil.BaseDSL.weight
-import trikita.anvil.DSL.*
-import trikita.anvil.RenderableAdapter
-import trikita.anvil.RenderableView
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import ru.lad24.SymCodeSpp
+import java.lang.Exception
 
-
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
   private val REQUEST_CODE_OPEN_GPS = 1
   private val REQUEST_CODE_PERMISSION_LOCATION = 2
-  private var symcode: Symcode? = null
+  var barcodeState: MutableState<String> =  mutableStateOf("")
+  lateinit var  scaner: SymCodeSpp;
 
-  @ExperimentalStdlibApi
-  override fun onCreate(b: Bundle?) {
-    super.onCreate(b)
-    checkPermissions()
-    symcode = Symcode(application!!)
-    setContentView(this.Scanview(this))
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContent {
+      checkPermissions()
+      SymcodeView(application)
+    }
   }
 
-  @ExperimentalStdlibApi
-  fun Scanview(cntx: Context): RenderableView {
-    val list = mutableListOf<BleDevice>()
-    return object : RenderableView(cntx) {
-      override fun view() {
-        val mBtList = RenderableAdapter.withItems(
-          list
-        ) { _: Int, device: BleDevice? ->
-          linearLayout {
-            size(FILL, WRAP)
-            minHeight(dip(72))
-            linearLayout {
 
-              linearLayout {
-                orientation(LinearLayout.VERTICAL)
-                textView {
-//                                    size(0, WRAP)
-//                                    weight(1f)
-//                                    layoutGravity(CENTER_VERTICAL)
-//                                    padding(dip(5))
+  @Composable
+  fun SymcodeView(c:Application) = MaterialTheme {
+    Column() {
 
-                  text(device?.name.orEmpty())
-
-                }
-                textView {
-//                                    size(0, WRAP)
-//                                    weight(1f)
-//                                    layoutGravity(CENTER_VERTICAL)
-//                                    padding(dip(5))
-                  if (device != null) {
-                    text(device.mac)
-                  }
-                }
-
-              }
-
-              button {
-                size(0, WRAP)
-                weight(1f)
-                layoutGravity(CENTER_VERTICAL)
-                text("ВКЛ")
-                onClick { _ ->
-                  symcode!!.connect(device!!) { success ->
-                    if (success) {
-
-                      symcode!!.enableNotify(
-                        object : OnNotifyEnabledResult {
-                          override fun result(error: Exception?) {
-                            toast("нотификация включена)")
-                          }
-
-
-                        }) {
-
-                        toast("Code : $it")
-
-                      }
-                    } else {
-                      toast("Печалька :(")
-                    }
-
-                  }
-
-                }
-              }
-              button {
-                size(0, WRAP)
-                weight(1f)
-                layoutGravity(CENTER_VERTICAL)
-                text("ОТКЛ")
-                onClick { v ->
-                  symcode.let {
-                    it?.disconnect()
-                  }
-
-                }
-              }
+      Column(Modifier.padding(all = 0.dp)) {
+        TopAppBar(
+          title = { Text(text = "Symcode BT SPP TEST APP") }
+        )
+      }
+      Column(Modifier.padding(all = 5.dp)) {
+        Row(
+          Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceAround
+        ) {
+          SymcodeButton("Connect") {
+            barcodeState.value = "Подключение...."
+            scaner = SymCodeSpp(c)
+            if(scaner.connect()){
+              barcodeState.value = "Подключен"
+            }else{
+              barcodeState.value = "Не смог установить соединение :("
+            }
+            scaner.enableNotify { it
+            barcodeState.value = it
+            }
+          }
+          SymcodeButton("Disconnect") {
+            barcodeState.value = "Сканер отключен"
+            try {
+              scaner.disableNotify()
+              scaner.dicsonnect()
+            }catch (e:Exception){
+              barcodeState.value = "Ошибка отключения : ${e.message}"
             }
 
           }
+
 
         }
-        linearLayout {
-          minHeight(dip(72))
-          orientation(LinearLayout.VERTICAL)
-          text("Выполните сканирование устройств")
-          button {
-            layoutGravity(CENTER_VERTICAL)
-            text("Scan")
-            onClick { v ->
+        Card(
+          Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .border(BorderStroke(2.dp, MaterialTheme.colors.contentColorFor(Color.White))),
 
-              symcode?.scan(object : Symcode.OnScanBtDevicesResult {
-                override fun result(
-                  error: Exception?,
-                  scanResultList: List<BleDevice?>?
-                ) {
-                  toast("Сканирование завершено")
-                }
 
-                override fun foundNewDevice(bleDevice: BleDevice?) {
-                  bleDevice.let {
-                    it?.let { it1 -> list.add(it1) }
-                    Anvil.render()
-                  }
-                }
+          ) {
+          Text(text = barcodeState.value,
+            Modifier
+              .fillMaxWidth()
+              .padding(all = 5.dp)
+              .fillMaxHeight())
 
-              })
-
-            }
-          }
-
-          listView {
-            size(FILL, WRAP)
-            itemsCanFocus(true)
-            onItemClick { parent: AdapterView<*>?, v: View?, pos: Int, id: Long ->
-
-            }
-            adapter(mBtList)
-          }
         }
+
+
+      }
+
+    }
+  }
+
+
+  @Composable
+  fun SymcodeButton(name: String, cb: () -> Unit) {
+    Column(
+      modifier = Modifier.padding(all = 10.dp),
+      verticalArrangement = Arrangement.Center,
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      Button(
+        onClick = cb,
+        modifier = Modifier.padding(horizontal = 5.dp),
+
+
+        ) {
+        Text(name)
       }
     }
+
+  }
+
+//  @Preview
+//  @Composable
+//  fun DefaultPreview() {
+//    SymcodeView()
+//  }
+
+
+  fun log(str: String) {
+    Log.e("ru.lad24.bt_cymcode", str)
   }
 
 
@@ -225,23 +195,3 @@ class MainActivity : AppCompatActivity() {
 
 }
 
-
-//        setContentView(object : RenderableView(this) {
-//            override fun view() {
-//                linearLayout {
-//                    size(MATCH, MATCH)
-//                    padding(dip(8))
-//                    orientation(LinearLayout.VERTICAL)
-//                    textView {
-//                        size(MATCH, WRAP)
-//                        text("Tick-tock: $ticktock")
-//                    }
-//                    button {
-//                        size(MATCH, WRAP)
-//                        text("Close")
-//                        // Finish current activity when the button is clicked
-//                        onClick { v -> finish() }
-//                    }
-//                }
-//            }
-//        })
