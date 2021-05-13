@@ -16,6 +16,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.material.*
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,6 +27,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import ru.lad24.SymCodeSpp
 import java.lang.Exception
@@ -33,8 +35,8 @@ import java.lang.Exception
 class MainActivity : ComponentActivity() {
   private val REQUEST_CODE_OPEN_GPS = 1
   private val REQUEST_CODE_PERMISSION_LOCATION = 2
-  var barcodeState: MutableState<String> =  mutableStateOf("")
-  lateinit var  scaner: SymCodeSpp;
+  var barcodeState: MutableState<String> = mutableStateOf("")
+  lateinit var scaner: SymCodeSpp;
 
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +49,7 @@ class MainActivity : ComponentActivity() {
 
 
   @Composable
-  fun SymcodeView(c:Application) = MaterialTheme {
+  fun SymcodeView(c: Application) = MaterialTheme {
     Column() {
 
       Column(Modifier.padding(all = 0.dp)) {
@@ -63,13 +65,14 @@ class MainActivity : ComponentActivity() {
           SymcodeButton("Connect") {
             barcodeState.value = "Подключение...."
             scaner = SymCodeSpp(c)
-            if(scaner.connect()){
+            if (scaner.connect()) {
               barcodeState.value = "Подключен"
-            }else{
+            } else {
               barcodeState.value = "Не смог установить соединение :("
             }
-            scaner.enableNotify { it
-            barcodeState.value = it
+            scaner.enableNotify {
+              it
+              barcodeState.value = it
             }
           }
           SymcodeButton("Disconnect") {
@@ -77,7 +80,7 @@ class MainActivity : ComponentActivity() {
             try {
               scaner.disableNotify()
               scaner.dicsonnect()
-            }catch (e:Exception){
+            } catch (e: Exception) {
               barcodeState.value = "Ошибка отключения : ${e.message}"
             }
 
@@ -88,18 +91,40 @@ class MainActivity : ComponentActivity() {
         Card(
           Modifier
             .fillMaxWidth()
-            .fillMaxHeight()
+//            .fillMaxHeight()
             .border(BorderStroke(2.dp, MaterialTheme.colors.contentColorFor(Color.White))),
 
 
           ) {
-          Text(text = barcodeState.value,
+          Text(
+            text = barcodeState.value,
             Modifier
               .fillMaxWidth()
               .padding(all = 5.dp)
-              .fillMaxHeight())
+              .height(150.dp)
+              .fillMaxHeight()
+          )
 
         }
+        Text(
+          text = "Scan to SPP mode :)",
+          Modifier
+
+            .height(50.dp)
+            .align(Alignment.CenterHorizontally)
+
+        )
+
+
+          Image(
+            painter = painterResource(R.mipmap.qr),
+            contentDescription = "Scan to SPP mode :)",
+            Modifier
+              .fillMaxWidth()
+              .fillMaxHeight()
+          )
+
+
 
 
       }
