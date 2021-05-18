@@ -6,7 +6,6 @@ plugins {
 
 android {
   compileSdkVersion 30
-  buildToolsVersion "26.0.3"
   defaultConfig {
     applicationId "ru.lad24.bt_cymcode"
     minSdkVersion 26
@@ -24,17 +23,40 @@ android {
     jvmTarget = "1.8"
     useIR = true
   }
+  buildFeatures {
+    // Enables Jetpack Compose for this module
+    compose true
+  }
 
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+
+
+  composeOptions {
+    kotlinCompilerExtensionVersion '1.0.0-beta06'
+  }
 
 }
 repositories {
   mavenCentral()
   google()
 }
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+  kotlinOptions {
+    jvmTarget = "1.8"
+    freeCompilerArgs += [
+      "-Xallow-jvm-ir-dependencies",
+      "-P",
+      "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=true"
+    ]
+  }
+}
 
 dependencies {
-
-  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+// suppressKotlinVersionCompatibilityCheck
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:1.4.32"
   implementation 'androidx.core:core-ktx:1.3.2'
   implementation 'androidx.appcompat:appcompat:1.2.0'
   implementation 'com.google.android.material:material:1.3.0'
@@ -44,5 +66,23 @@ dependencies {
   // noinspection GradleDynamicVersion
 
   api 'com.facebook.react:react-native:+'
-  api 'com.clj.fastble:FastBleLib:2.3.4'
+//  api 'com.clj.fastble:FastBleLib:2.3.4'
+
+  implementation 'androidx.compose.ui:ui:1.0.0-beta06'
+  // Tooling support (Previews, etc.)
+  implementation 'androidx.compose.ui:ui-tooling:1.0.0-beta06'
+  // Foundation (Border, Background, Box, Image, Scroll, shapes, animations, etc.)
+  implementation 'androidx.compose.foundation:foundation:1.0.0-beta06'
+  // Material Design
+  implementation 'androidx.compose.material:material:1.0.0-beta06'
+  // Material design icons
+  implementation 'androidx.compose.material:material-icons-core:1.0.0-beta06'
+  implementation 'androidx.compose.material:material-icons-extended:1.0.0-beta06'
+  // Integration with activities
+  implementation 'androidx.activity:activity-compose:1.3.0-alpha07'
+  // Integration with ViewModels
+  implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha04'
+  // Integration with observables
+  implementation 'androidx.compose.runtime:runtime-livedata:1.0.0-beta06'
+  implementation 'androidx.compose.runtime:runtime-rxjava2:1.0.0-beta06'
 }

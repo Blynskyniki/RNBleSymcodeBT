@@ -4,15 +4,13 @@ import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.util.Log
 import androidx.annotation.Nullable
-import com.clj.fastble.data.BleDevice
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
-import ru.lad24.Symcode
+import ru.lad24.SymCodeSpp
 
 class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
-  val driver by lazy { Symcode(reactContext.applicationContext as Application) }
-  val devices: HashMap<String, BleDevice> = hashMapOf()
+  val driver by lazy { SymCodeSpp(reactContext.applicationContext as Application) }
   override fun getName(): String {
     return "RnSymcodeBt"
   }
@@ -42,71 +40,38 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
     promise.resolve(true)
   }
 
-  @ReactMethod
-  fun scanDevices(promise: Promise) {
-    driver.scan(object : Symcode.OnScanBtDevicesResult {
-      override fun result(
-        error: Exception?,
-        scanResultList: List<BleDevice?>?
-      ) {
-        if (scanResultList != null) {
-          val mutableList = WritableNativeArray()
-          scanResultList.forEach {
-            if (it != null) {
-              devices.set(it.mac, it)
 
-              val map = Arguments.createMap()
-              map.putString("name", it.name.orEmpty())
-              map.putString("mac", it.mac)
-              mutableList.pushMap(map)
-            }
-          }
-          log("$mutableList")
-          promise.resolve(mutableList)
-        } else {
-          promise.resolve(WritableNativeArray())
-        }
-      }
-
-      override fun foundNewDevice(bleDevice: BleDevice?) {
-      }
-    })
-
-  }
 
   @ReactMethod
   fun connect(mac: String, promise: Promise) {
-
-    if (devices.containsKey(mac)) {
-      driver.connect(devices[mac]!!) {
-        promise.resolve(it)
-      }
-    } else {
-      promise.reject("404", "Device not found! Please  rescan device")
+    if(driver.connect()){
+      promise.resolve({})
     }
+    promise.reject("404", "Device not found! Please  rescan device")
+
+  }
+  @ReactMethod
+  fun isConnected(mac: String, promise: Promise) {
+    if(driver.isConnected()){
+      promise.resolve(true)
+    }
+    promise.resolve(false)
+
   }
 
   @ReactMethod
   fun disconnect(promise: Promise) {
-    driver.disconnect()
+    driver.dicsonnect()
     promise.resolve("ok")
   }
 
   @ExperimentalStdlibApi
   @ReactMethod
   fun enableNotify(promise: Promise) {
-    driver.enableNotify(object : Symcode.OnNotifyEnabledResult {
-      override fun result(error: Exception?) {
-        if (error !== null) {
-          promise.reject(error)
-        }
-        promise.resolve("ok")
-      }
-    }) {
+    driver.enableNotify(){
       val map = Arguments.createMap()
       map.putString("barcode", it)
       sendEvent(this.reactApplicationContext, BARCODE_SCAN_NOTIFY_EVENT_NAME, map)
-
     }
   }
 

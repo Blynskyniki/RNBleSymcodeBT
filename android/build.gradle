@@ -8,7 +8,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.2.1'
+    classpath 'com.android.tools.build:gradle:4.2.0'
     // noinspection DifferentKotlinGradleVersion
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
@@ -133,6 +133,5 @@ dependencies {
   api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
   api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-  api "org.jetbrains.anko:anko-commons:0.10.8"
-  api 'com.clj.fastble:FastBleLib:2.3.4'
+  api 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.13'
 }
