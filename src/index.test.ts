@@ -15,7 +15,7 @@ describe('tests', () => {
   test('call constructor and connect',async ()=>{
 
     const instance =  new Symcode();
-    await instance.connect('fake_mac');
+    await instance.connect();
 
     expect(spy).toBeCalled()
 
