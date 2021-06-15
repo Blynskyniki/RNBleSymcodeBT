@@ -116,43 +116,38 @@ class SymCodeSpp(val cntx: Application) {
   }
 
   fun connect(mac: String): Boolean {
-    val dev = btAdapter!!.getRemoteDevice(mac)
-    log("Bluetooth adapter available,${dev.name}");
+    val device = btAdapter!!.getRemoteDevice(mac)
+    log("Bluetooth adapter available,${device.name}");
 
-    if (!isPaired(mac) || dev === null) {
+    log("Target Bluetooth device found  ${device.getName()}")
+    try {
+      btSocket = device.createRfcommSocketToServiceRecord(MY_UUID_SECURE)
+
+    } catch (ex: IOException) {
+      log("Failed to create RfComm socket: " + ex.toString());
       return false
     }
+    log("Created a bluetooth socket. ");
+    btSocket?.let { bluetoothSocket ->
+      for (i in 1..5) {
+        try {
+          btSocket!!.connect()
+          reader = BufferedReader(InputStreamReader(bluetoothSocket.inputStream, "ASCII"))
 
-
-    dev.let { device ->
-      log("Target Bluetooth device found  ${dev.getName()}")
-      try {
-        btSocket = device.createRfcommSocketToServiceRecord(MY_UUID_SECURE)
-
-      } catch (ex: IOException) {
-        log("Failed to create RfComm socket: " + ex.toString());
-        return false
-      }
-      log("Created a bluetooth socket. ");
-      btSocket?.let { bluetoothSocket ->
-        for (i in 1..5) {
-          try {
-            btSocket!!.connect()
-            reader = BufferedReader(InputStreamReader(bluetoothSocket.inputStream, "ASCII"))
-
-            break
-          } catch (ex: IOException) {
-            if (i < 5) {
-              log("Failed to connect. Retrying: $ex")
-              continue
-            }
-            log("Failed to connect: $ex")
-            return false
+          break
+        } catch (ex: IOException) {
+          if (i < 5) {
+            log("Failed to connect. Retrying: $ex")
+            continue
           }
+          log("Failed to connect: $ex")
+          return false
         }
-
       }
+
     }
+
+
 
 
     return true
