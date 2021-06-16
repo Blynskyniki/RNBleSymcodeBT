@@ -2,6 +2,7 @@ package com.rnsymcodebt
 
 import android.app.Application
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.util.Log
 import androidx.annotation.Nullable
 import com.facebook.react.bridge.*
@@ -15,7 +16,7 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
     return "RnSymcodeBt"
   }
 
-  private val TAG = "BLE-Symcode"
+  private val TAG = "ru.lad24.sppSymcode"
 
   fun log(data: String) {
     Log.d(TAG, data)
@@ -49,18 +50,23 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun searchDevices(promise: Promise) {
-
+  try {
     driver.searchDevices {
-
-      promise.resolve(it.map { d ->
-        Arguments.createMap().apply {
-          putString("name", d.name)
-          putString("address", d.address)
-          putString("bondState", d.bondState.toString())
-
+      val mutableList = WritableNativeArray();
+      it.forEach { d: BluetoothDevice ->
+          val map = Arguments.createMap()
+          map.putString("name", d.name)
+          map.putString("mac", d.address)
+          map.putString("bondState", d.bondState.toString())
+          mutableList.pushMap(map)
         }
-      })
+      log("${mutableList}")
+        promise.resolve(mutableList)
     }
+  } catch (e: Error) {
+    log("${e.message}");
+  }
+
 
 
   }
