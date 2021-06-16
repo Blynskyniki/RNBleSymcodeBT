@@ -1,9 +1,10 @@
 import { DeviceEventEmitter, NativeModules } from 'react-native';
-const android = NativeModules.RnSymcodeBt ;
+
+const android = NativeModules.RnSymcodeBt;
 
 const BARCODE_SCAN_NOTIFY_EVENT_NAME = 'BARCODE_SCAN_NOTIFY_EVENT';
 
-export type  Device = Record<'name' | 'mac', string>;
+export type  Device = Record<'name' | 'mac' | 'bondState', string>;
 
 export default class SymcodeDriver {
   public async enableBluetooth(): Promise<boolean> {
@@ -14,7 +15,19 @@ export default class SymcodeDriver {
     return android.connect();
   }
 
-  public async connect(): Promise<boolean> {
+  public async searchDevices(): Promise<Device[]> {
+    return android.searchDevices();
+  }
+
+  public async isPaired(mac: string): Promise<boolean> {
+    return android.isPaired(mac);
+  }
+
+  public async pairDevice(mac: string): Promise<boolean> {
+    return android.pairDevice(mac);
+  }
+
+  public async connect(mac: string): Promise<boolean> {
     return android.connect();
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "rn-symcode-bt",
-  "version": "0.1.51",
+  "version": "0.1.58",
   "description": "React native library from Symcode barcodes scaner",
   "main": "dist/index.js",
   "publishConfig": {
@@ -11,6 +11,7 @@
     "typescript": "tsc",
     "build": "rm -rf ./dist && npm run typescript",
     "vUp": "npm --no-git-tag-version version patch",
+    "testBuild": "npm run build && npm run vUp",
     "prepublish": "npm run build && npm run vUp"
   },
   "keywords": [

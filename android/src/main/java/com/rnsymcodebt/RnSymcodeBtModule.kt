@@ -14,11 +14,13 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
   override fun getName(): String {
     return "RnSymcodeBt"
   }
+
   private val TAG = "BLE-Symcode"
 
   fun log(data: String) {
     Log.d(TAG, data)
   }
+
   companion object {
     const val BARCODE_SCAN_NOTIFY_EVENT_NAME = "BARCODE_SCAN_NOTIFY_EVENT"
   }
@@ -40,19 +42,51 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
     promise.resolve(true)
   }
 
+  @ReactMethod
+  fun isPaired(mac: String, promise: Promise) {
+    promise.resolve(driver.isPaired(mac))
+  }
 
+  @ReactMethod
+  fun searchDevices(promise: Promise) {
+
+    driver.searchDevices {
+
+      promise.resolve(it.map { d ->
+        Arguments.createMap().apply {
+          putString("name", d.name)
+          putString("address", d.address)
+          putString("bondState", d.bondState.toString())
+
+        }
+      })
+    }
+
+
+  }
+
+  @ReactMethod
+  fun pairDevice(mac: String, promise: Promise) {
+    driver.pairDevice(mac) {
+      if (it !== null) {
+        promise.reject(it)
+      }
+      promise.resolve({})
+    }
+  }
 
   @ReactMethod
   fun connect(mac: String, promise: Promise) {
-    if(driver.connect()){
-      promise.resolve({})
+    if (driver.connect(mac)) {
+      promise.resolve(true)
     }
     promise.reject("404", "Device not found! Please  rescan device")
 
   }
+
   @ReactMethod
   fun isConnected(mac: String, promise: Promise) {
-    if(driver.isConnected()){
+    if (driver.isConnected()) {
       promise.resolve(true)
     }
     promise.resolve(false)
@@ -68,7 +102,7 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
   @ExperimentalStdlibApi
   @ReactMethod
   fun enableNotify(promise: Promise) {
-    driver.enableNotify(){
+    driver.enableNotify() {
       val map = Arguments.createMap()
       map.putString("barcode", it)
       sendEvent(this.reactApplicationContext, BARCODE_SCAN_NOTIFY_EVENT_NAME, map)

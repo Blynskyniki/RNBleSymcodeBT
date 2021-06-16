@@ -19,7 +19,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.material.*
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.*
@@ -35,6 +34,7 @@ import java.lang.Exception
 class MainActivity : ComponentActivity() {
   private val REQUEST_CODE_OPEN_GPS = 1
   private val REQUEST_CODE_PERMISSION_LOCATION = 2
+  private val MY_SSP_MAC = "AA:A8:A3:00:94:6D"
   var barcodeState: MutableState<String> = mutableStateOf("")
   lateinit var scaner: SymCodeSpp;
 
@@ -57,15 +57,58 @@ class MainActivity : ComponentActivity() {
           title = { Text(text = "Symcode BT SPP TEST APP") }
         )
       }
+
       Column(Modifier.padding(all = 5.dp)) {
         Row(
           Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.SpaceAround
         ) {
+
+          SymcodeButton("Сканирование") {
+            barcodeState.value = ""
+            scaner = SymCodeSpp(c)
+            scaner.searchDevices(){
+              barcodeState.value = it.map {  "${it.name} ${it.address}  \n" }.toString()
+
+            }
+
+          }
+        }
+
+
+      }
+      Column(Modifier.padding(all = 5.dp)) {
+        Row(
+          Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceAround
+        ) {
+
+          SymcodeButton("Паринг с AA:A8:A3:00:94:6D") {
+            barcodeState.value = ""
+
+            scaner.pairDevice("AA:A8:A3:00:94:6D"){
+              if(it !== null){
+                barcodeState.value = it.message.toString()
+                return@pairDevice
+              }
+              barcodeState.value = "paired"
+            }
+
+          }
+        }
+
+
+      }
+      Column(Modifier.padding(all = 5.dp)) {
+        Row(
+          Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceAround
+        ) {
+
           SymcodeButton("Connect") {
             barcodeState.value = "Подключение...."
             scaner = SymCodeSpp(c)
-            if (scaner.connect()) {
+            if (scaner.connect(MY_SSP_MAC)) {
               barcodeState.value = "Подключен"
             } else {
               barcodeState.value = "Не смог установить соединение :("
@@ -116,15 +159,13 @@ class MainActivity : ComponentActivity() {
         )
 
 
-          Image(
-            painter = painterResource(R.mipmap.qr),
-            contentDescription = "Scan to SPP mode :)",
-            Modifier
-              .fillMaxWidth()
-              .fillMaxHeight()
-          )
-
-
+        Image(
+          painter = painterResource(R.mipmap.qr),
+          contentDescription = "Scan to SPP mode :)",
+          Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+        )
 
 
       }
