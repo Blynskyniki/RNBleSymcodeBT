@@ -15,8 +15,10 @@ import androidx.core.content.ContextCompat
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
+import java.lang.Error
 import java.lang.reflect.Method
 import java.util.*
+import kotlin.collections.HashSet
 
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
@@ -44,41 +46,47 @@ class SymCodeSpp(val cntx: Application) {
     Log.e("ru.lad24.sppSymcode", str)
   }
 
-  fun searchDevices(cb: (devices: MutableList<BluetoothDevice>) -> Unit) {
-    list.clear()
-    if (btAdapter?.isDiscovering == true) btAdapter?.cancelDiscovery()
-    btAdapter?.startDiscovery()
+  fun searchDevices(cb: (devices: HashSet<BluetoothDevice>) -> Unit) {
+    try {
+      list.clear()
+      if (btAdapter?.isDiscovering == true) btAdapter?.cancelDiscovery()
+      btAdapter?.startDiscovery()
 
-    val filter = IntentFilter().apply {
-      addAction(BluetoothDevice.ACTION_FOUND)
-      addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-      addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-    }
-    cntx.registerReceiver(object : BroadcastReceiver() {
-      override fun onReceive(context: Context, intent: Intent) {
-        val action: String = intent.action!!
-        when (action) {
-          BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-            log("ACTION_DISCOVERY_FINISHED")
-            btAdapter?.cancelDiscovery()
-            val filteredDevices = list.filter { it.name !== null }.toMutableList()
-            filteredDevices.forEach {
-              log("${it.name} ${it.address}")
-            }
-
-            cb(filteredDevices)
-          }
-          BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
-            log("ACTION_DISCOVERY_STARTED")
-          }
-          BluetoothDevice.ACTION_FOUND -> {
-            val device: BluetoothDevice =
-              intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-            list.add(device)
-          }
-        }
+      val filter = IntentFilter().apply {
+        addAction(BluetoothDevice.ACTION_FOUND)
+        addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
       }
-    }, filter)
+      cntx.registerReceiver(object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val action: String = intent.action!!
+            when (action) {
+              BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
+                log("ACTION_DISCOVERY_FINISHED")
+                btAdapter?.cancelDiscovery()
+                val filteredDevices = list.filter { it.name !== null }.toHashSet()
+                filteredDevices.forEach {
+                  log("${it.name} ${it.address}")
+                }
+
+                cb(filteredDevices)
+              }
+              BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
+                log("ACTION_DISCOVERY_STARTED")
+              }
+              BluetoothDevice.ACTION_FOUND -> {
+                log("ACTION_FOUND")
+                val device: BluetoothDevice =
+                  intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                list.add(device)
+              }
+            }
+        }
+      }, filter)
+    } catch (e: Error) {
+     log("${e.message}");
+    }
+
   }
 
   private fun createBond(btDevice: BluetoothDevice?): Boolean {
@@ -96,9 +104,11 @@ class SymCodeSpp(val cntx: Application) {
         val isBonded = createBond(device)
         if (isBonded) {
           log("Paired")
+        } else {
+          cb(java.lang.Exception("Pairing failed"))
         }
       } catch (e: java.lang.Exception) {
-        e.message?.let { log(it) }
+        log("${e.message}")
       }
 
 
@@ -112,42 +122,50 @@ class SymCodeSpp(val cntx: Application) {
   }
 
   fun isPaired(mac: String): Boolean {
-    return btAdapter!!.bondedDevices.find { it.address === mac } !== null
+    val device = btAdapter!!.bondedDevices.find { it.address === mac }
+    log("${device}, ${device?.bondState}")
+    return device !== null && device.bondState > 0
   }
 
   fun connect(mac: String): Boolean {
-    val device = btAdapter!!.getRemoteDevice(mac)
-    log("Bluetooth adapter available,${device.name}");
+    log("connect ${mac}");
+    val dev = BluetoothAdapter.getDefaultAdapter()!!.getRemoteDevice(mac)
+    log("Bluetooth adapter available,${dev.name}");
 
-    log("Target Bluetooth device found  ${device.getName()}")
-    try {
-      btSocket = device.createRfcommSocketToServiceRecord(MY_UUID_SECURE)
-
-    } catch (ex: IOException) {
-      log("Failed to create RfComm socket: " + ex.toString());
+    if (!isPaired(mac) || dev === null) {
       return false
     }
-    log("Created a bluetooth socket. ");
-    btSocket?.let { bluetoothSocket ->
-      for (i in 1..5) {
-        try {
-          btSocket!!.connect()
-          reader = BufferedReader(InputStreamReader(bluetoothSocket.inputStream, "ASCII"))
 
-          break
-        } catch (ex: IOException) {
-          if (i < 5) {
-            log("Failed to connect. Retrying: $ex")
-            continue
-          }
-          log("Failed to connect: $ex")
-          return false
-        }
+
+    dev.let { device ->
+      log("Target Bluetooth device found  ${dev.getName()}")
+      try {
+        btSocket = device.createRfcommSocketToServiceRecord(MY_UUID_SECURE)
+
+      } catch (ex: IOException) {
+        log("Failed to create RfComm socket: " + ex.toString());
+        return false
       }
+      log("Created a bluetooth socket. ");
+      btSocket?.let { bluetoothSocket ->
+        for (i in 1..5) {
+          try {
+            btSocket!!.connect()
+            reader = BufferedReader(InputStreamReader(bluetoothSocket.inputStream, "ASCII"))
 
+            break
+          } catch (ex: IOException) {
+            if (i < 5) {
+              log("Failed to connect. Retrying: $ex")
+              continue
+            }
+            log("Failed to connect: $ex")
+            return false
+          }
+        }
+
+      }
     }
-
-
 
 
     return true

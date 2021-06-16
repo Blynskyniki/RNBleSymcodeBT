@@ -28,7 +28,7 @@ export default class SymcodeDriver {
   }
 
   public async connect(mac: string): Promise<boolean> {
-    return android.connect();
+    return android.connect(mac);
   }
 
   public async disconnect(): Promise<void> {
