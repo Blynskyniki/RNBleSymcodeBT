@@ -193,7 +193,7 @@ class SymCodeSpp(val cntx: Application) {
 
     } else {
       log("Device not found")
-      cb(java.lang.Exception("Device not found"))
+      cb(java.lang.Exception("Устройство не найдено"))
     }
 
 
@@ -209,7 +209,7 @@ class SymCodeSpp(val cntx: Application) {
     val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
     if (!bluetoothAdapter.isEnabled) {
-      log("bluetooth выключен")
+      log("Bluetooth отключен")
       return false
     }
     val dev = bluetoothAdapter!!.getRemoteDevice(mac)
@@ -289,9 +289,6 @@ class SymCodeSpp(val cntx: Application) {
   }
 
 
-//  fun isConnected(): Boolean {
-//    return BluetoothAdapter.getDefaultAdapter() !== null && btDevice !== null && btSocket !== null && reader !== null
-//  }
 
   private fun checkPermissions(cntx: Context) {
     val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()

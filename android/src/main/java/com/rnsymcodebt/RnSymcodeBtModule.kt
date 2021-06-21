@@ -1,6 +1,7 @@
 package com.rnsymcodebt
 
 import android.app.Application
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.util.Log
 import androidx.annotation.Nullable
@@ -28,6 +29,9 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
 
   private fun handlePromiseWrapper(promise: Promise, cb: () -> Unit) {
     try {
+      if (!BluetoothAdapter.getDefaultAdapter().isEnabled) {
+        throw Exception("Bluetooth отключен")
+      }
       cb()
     } catch (e: Exception) {
       log("${e.message}")
@@ -48,12 +52,9 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun enableBluetooth(promise: Promise) {
-    handlePromiseWrapper(promise) {
-      driver.enableBt {
-        promise.resolve(it)
-      }
+    driver.enableBt {
+      promise.resolve(it)
     }
-
   }
 
 
@@ -89,6 +90,8 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
   @ReactMethod
   fun pairDevice(mac: String, promise: Promise) {
     handlePromiseWrapper(promise) {
+
+
       driver.pairDevice(mac) {
         if (it !== null) {
           promise.reject(it)
@@ -104,7 +107,7 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
       if (driver.connect(mac)) {
         promise.resolve(true)
       }
-      promise.reject("404", "Device not found! Please  rescan device")
+      promise.reject("404", "Устрройство не найдено. Выполните поиск устройств заново")
     }
   }
 
