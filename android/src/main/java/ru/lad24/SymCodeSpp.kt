@@ -90,7 +90,9 @@ class SymCodeSpp(val cntx: Application) {
     val class1 = Class.forName("android.bluetooth.BluetoothDevice")
     val createBondMethod: Method = class1.getMethod("createBond")
     createBondMethod.invoke(btDevice) as Boolean
+    //     Для отладки
     val ACTION_PAIRING_REQUEST = "android.bluetooth.device.action.PAIRING_REQUEST"
+
     val filter = IntentFilter().apply {
       addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
       addAction(ACTION_PAIRING_REQUEST)
@@ -101,20 +103,14 @@ class SymCodeSpp(val cntx: Application) {
         when (action) {
           BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
             log("ACTION_BOND_STATE_CHANGED")
-
             val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
             if (device.bondState == BluetoothDevice.BOND_BONDED && device.address === btDevice!!.address) {
               log("pairing success")
-
               cb(null)
             }
-
-
           }
           ACTION_PAIRING_REQUEST -> {
             log("ACTION_PAIRING_REQUEST")
-
-
           }
 
         }
