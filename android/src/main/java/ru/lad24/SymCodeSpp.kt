@@ -21,9 +21,19 @@ import java.util.*
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 class SymCodeSpp(val cntx: Application) {
+  companion object {
+    private var instance: SymCodeSpp? = null;
+
+    fun getInstance(cntx: Application): SymCodeSpp {
+      if (this.instance == null) {
+        this.instance = SymCodeSpp(cntx)
+      }
+      return this.instance!!
+
+    }
+  }
 
   val MY_UUID_SECURE: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
-  private var btDevice: BluetoothDevice? = null
   private var btSocket: BluetoothSocket? = null
   private var reader: BufferedReader? = null
   private var notifyTask: Thread? = null
@@ -145,7 +155,7 @@ class SymCodeSpp(val cntx: Application) {
           BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
             log("ACTION_BOND_STATE_CHANGED")
             val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-            if (device.bondState == BluetoothDevice.BOND_BONDED ) {
+            if (device.bondState == BluetoothDevice.BOND_BONDED) {
               log("pairing success")
               cb(null)
             }
@@ -164,12 +174,12 @@ class SymCodeSpp(val cntx: Application) {
     val device = list.find { it.address == mac }
     if (device !== null) {
 
-      if(device.bondState == BluetoothDevice.BOND_BONDED){
+      if (device.bondState == BluetoothDevice.BOND_BONDED) {
         cb(null)
         return
-      }else{
+      } else {
         try {
-          createBond(device){
+          createBond(device) {
             cb(it)
           }
 
@@ -179,7 +189,6 @@ class SymCodeSpp(val cntx: Application) {
           cb(java.lang.Exception("Pairing failed"))
         }
       }
-
 
 
     } else {

@@ -11,7 +11,7 @@ import java.lang.Exception
 
 class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
-  val driver by lazy { SymCodeSpp(reactContext.applicationContext as Application) }
+  val driver by lazy { SymCodeSpp.getInstance(reactContext.applicationContext as Application) }
   override fun getName(): String {
     return "RnSymcodeBt"
   }

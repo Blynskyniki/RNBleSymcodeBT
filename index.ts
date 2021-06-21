@@ -43,3 +43,5 @@ export default class SymcodeDriver {
     DeviceEventEmitter.removeAllListeners(BARCODE_SCAN_NOTIFY_EVENT_NAME);
   }
 }
+
+
