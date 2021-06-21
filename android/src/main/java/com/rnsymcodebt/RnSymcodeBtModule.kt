@@ -3,6 +3,10 @@ package com.rnsymcodebt
 import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.util.Log
 import androidx.annotation.Nullable
 import com.facebook.react.bridge.*
@@ -12,6 +16,7 @@ import ru.lad24.SymCodeSpp
 class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
   val driver by lazy { SymCodeSpp(reactContext.applicationContext as Application) }
+  val cntx by lazy { reactContext.applicationContext as Application }
   override fun getName(): String {
     return "RnSymcodeBt"
   }
@@ -38,10 +43,11 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun enableBluetooth(promise: Promise) {
-    val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-    bluetoothAdapter.enable()
-    promise.resolve(true)
+    driver.enableBt {
+      promise.resolve(it)
+    }
   }
+
 
   @ReactMethod
   fun isPaired(mac: String, promise: Promise) {
@@ -50,23 +56,22 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun searchDevices(promise: Promise) {
-  try {
-    driver.searchDevices {
-      val mutableList = WritableNativeArray();
-      it.forEach { d: BluetoothDevice ->
+    try {
+      driver.searchDevices {
+        val mutableList = WritableNativeArray();
+        it.forEach { d: BluetoothDevice ->
           val map = Arguments.createMap()
           map.putString("name", d.name)
           map.putString("mac", d.address)
           map.putString("bondState", d.bondState.toString())
           mutableList.pushMap(map)
         }
-      log("${mutableList}")
+        log("${mutableList}")
         promise.resolve(mutableList)
+      }
+    } catch (e: Error) {
+      log("${e.message}");
     }
-  } catch (e: Error) {
-    log("${e.message}");
-  }
-
 
 
   }
@@ -90,14 +95,14 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
 
   }
 
-  @ReactMethod
-  fun isConnected(mac: String, promise: Promise) {
-    if (driver.isConnected()) {
-      promise.resolve(true)
-    }
-    promise.resolve(false)
-
-  }
+//  @ReactMethod
+//  fun isConnected(mac: String, promise: Promise) {
+//    if (driver.isConnected()) {
+//      promise.resolve(true)
+//    }
+//    promise.resolve(false)
+//
+//  }
 
   @ReactMethod
   fun disconnect(promise: Promise) {
@@ -113,6 +118,7 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
       map.putString("barcode", it)
       sendEvent(this.reactApplicationContext, BARCODE_SCAN_NOTIFY_EVENT_NAME, map)
     }
+    promise.resolve(true)
   }
 
 

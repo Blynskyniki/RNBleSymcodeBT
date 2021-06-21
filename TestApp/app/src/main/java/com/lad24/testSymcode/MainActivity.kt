@@ -41,8 +41,9 @@ class MainActivity : ComponentActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    scaner = SymCodeSpp(application)
     setContent {
-      checkPermissions()
+//      checkPermissions()
       SymcodeView(application)
     }
   }
@@ -66,11 +67,14 @@ class MainActivity : ComponentActivity() {
 
           SymcodeButton("Сканирование") {
             barcodeState.value = ""
-            scaner = SymCodeSpp(c)
-            scaner.searchDevices(){
-              barcodeState.value = it.map {  "${it.name} ${it.address}  \n" }.toString()
 
+            scaner.enableBt {
+              scaner.searchDevices() {
+                barcodeState.value = it.map { "${it.name} ${it.address}  \n" }.toString()
+
+              }
             }
+
 
           }
         }
@@ -86,8 +90,8 @@ class MainActivity : ComponentActivity() {
           SymcodeButton("Паринг с AA:A8:A3:00:94:6D") {
             barcodeState.value = ""
 
-            scaner.pairDevice("AA:A8:A3:00:94:6D"){
-              if(it !== null){
+            scaner.pairDevice("AA:A8:A3:00:94:6D") {
+              if (it !== null) {
                 barcodeState.value = it.message.toString()
                 return@pairDevice
               }

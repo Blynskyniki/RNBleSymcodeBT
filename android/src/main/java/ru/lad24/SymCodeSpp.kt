@@ -23,16 +23,19 @@ import java.util.*
 class SymCodeSpp(val cntx: Application) {
 
   val MY_UUID_SECURE: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
-  private var btAdapter: BluetoothAdapter? = null
   private var btDevice: BluetoothDevice? = null
   private var btSocket: BluetoothSocket? = null
   private var reader: BufferedReader? = null
   private var notifyTask: Thread? = null
+
+  val STATE_CONNECTED = 2
+  val STATE_CONNECTING = 1
+  val STATE_DISCONNECTED = 0
   var list = mutableSetOf<BluetoothDevice>()
 
   init {
-    btAdapter = BluetoothAdapter.getDefaultAdapter()
-    if (btAdapter == null || btAdapter?.isEnabled == false) {
+
+    if (BluetoothAdapter.getDefaultAdapter() == null) {
       log("Нет доступа к устройству")
       throw Exception("Нет доступа к устройству")
     }
@@ -44,11 +47,51 @@ class SymCodeSpp(val cntx: Application) {
     Log.e("ru.lad24.sppSymcode", str)
   }
 
+
+  fun enableBt(cb: (succes: Boolean) -> Unit) {
+    val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
+    if (bluetoothAdapter.isEnabled) {
+      cb(true)
+    } else {
+      bluetoothAdapter.enable()
+      cntx.applicationContext.registerReceiver(object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+          val action: String = intent.action!!
+          when (action) {
+            BluetoothAdapter.ACTION_STATE_CHANGED -> {
+              log("ACTION_STATE_CHANGED")
+              val state = intent.getIntExtra(
+                BluetoothAdapter.EXTRA_STATE,
+                BluetoothAdapter.ERROR
+              );
+              log("state ${state}")
+
+              when (state) {
+
+                BluetoothAdapter.STATE_ON -> {
+                  cb(true)
+                }
+                BluetoothAdapter.STATE_OFF -> {
+                  cb(false)
+                }
+
+
+              }
+
+            }
+
+          }
+        }
+      }, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+
+    }
+  }
+
   fun searchDevices(cb: (devices: HashSet<BluetoothDevice>) -> Unit) {
     try {
       list.clear()
-      if (btAdapter?.isDiscovering == true) btAdapter?.cancelDiscovery()
-      btAdapter?.startDiscovery()
+      BluetoothAdapter.getDefaultAdapter()?.startDiscovery()
 
       val filter = IntentFilter().apply {
         addAction(BluetoothDevice.ACTION_FOUND)
@@ -61,7 +104,7 @@ class SymCodeSpp(val cntx: Application) {
           when (action) {
             BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
               log("ACTION_DISCOVERY_FINISHED")
-              btAdapter?.cancelDiscovery()
+              BluetoothAdapter.getDefaultAdapter()?.cancelDiscovery()
               val filteredDevices = list.filter { it.name !== null }.toHashSet()
               filteredDevices.forEach {
                 log("${it.name} ${it.address}")
@@ -90,6 +133,7 @@ class SymCodeSpp(val cntx: Application) {
     val class1 = Class.forName("android.bluetooth.BluetoothDevice")
     val createBondMethod: Method = class1.getMethod("createBond")
     createBondMethod.invoke(btDevice) as Boolean
+
     //     Для отладки
     val ACTION_PAIRING_REQUEST = "android.bluetooth.device.action.PAIRING_REQUEST"
 
@@ -122,9 +166,17 @@ class SymCodeSpp(val cntx: Application) {
   fun pairDevice(mac: String, cb: (err: Exception?) -> Unit) {
     val device = list.find { it.address == mac }
     if (device !== null) {
-      try {
-        createBond(device, cb)
 
+      if(device.bondState == BluetoothDevice.BOND_BONDED){
+        cb(null)
+        return
+      }
+      try {
+        createBond(device){
+          cb(it)
+        }
+
+        return
       } catch (e: java.lang.Exception) {
         log("${e}")
         cb(java.lang.Exception("Pairing failed"))
@@ -140,12 +192,12 @@ class SymCodeSpp(val cntx: Application) {
   }
 
   fun isPaired(mac: String): Boolean {
-    val device = btAdapter!!.getRemoteDevice(mac)
+    val device = BluetoothAdapter.getDefaultAdapter()!!.getRemoteDevice(mac)
     return device !== null && device.bondState == BluetoothDevice.BOND_BONDED
   }
 
   fun connect(mac: String): Boolean {
-    log("connect ${mac}");
+    log("connect ${mac}")
     val dev = BluetoothAdapter.getDefaultAdapter()!!.getRemoteDevice(mac)
     log("Bluetooth adapter available,${dev.name}");
 
@@ -224,9 +276,9 @@ class SymCodeSpp(val cntx: Application) {
   }
 
 
-  fun isConnected(): Boolean {
-    return btAdapter !== null && btDevice !== null && btSocket !== null && reader !== null
-  }
+//  fun isConnected(): Boolean {
+//    return BluetoothAdapter.getDefaultAdapter() !== null && btDevice !== null && btSocket !== null && reader !== null
+//  }
 
   private fun checkPermissions(cntx: Context) {
     val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
