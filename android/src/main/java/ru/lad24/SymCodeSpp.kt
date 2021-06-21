@@ -28,9 +28,6 @@ class SymCodeSpp(val cntx: Application) {
   private var reader: BufferedReader? = null
   private var notifyTask: Thread? = null
 
-  val STATE_CONNECTED = 2
-  val STATE_CONNECTING = 1
-  val STATE_DISCONNECTED = 0
   var list = mutableSetOf<BluetoothDevice>()
 
   init {
@@ -148,7 +145,7 @@ class SymCodeSpp(val cntx: Application) {
           BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
             log("ACTION_BOND_STATE_CHANGED")
             val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-            if (device.bondState == BluetoothDevice.BOND_BONDED && device.address === btDevice!!.address) {
+            if (device.bondState == BluetoothDevice.BOND_BONDED ) {
               log("pairing success")
               cb(null)
             }
@@ -170,17 +167,19 @@ class SymCodeSpp(val cntx: Application) {
       if(device.bondState == BluetoothDevice.BOND_BONDED){
         cb(null)
         return
-      }
-      try {
-        createBond(device){
-          cb(it)
-        }
+      }else{
+        try {
+          createBond(device){
+            cb(it)
+          }
 
-        return
-      } catch (e: java.lang.Exception) {
-        log("${e}")
-        cb(java.lang.Exception("Pairing failed"))
+
+        } catch (e: java.lang.Exception) {
+          log("${e}")
+          cb(java.lang.Exception("Pairing failed"))
+        }
       }
+
 
 
     } else {

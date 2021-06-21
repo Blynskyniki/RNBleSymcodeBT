@@ -11,11 +11,6 @@ export default class SymcodeDriver {
     return android.enableBluetooth();
   }
 
-
-  // public async isConnected(mac: string): Promise<boolean> {
-  //   return android.isConnected(mac);
-  // }
-
   public async searchDevices(): Promise<Device[]> {
     return android.searchDevices();
   }
