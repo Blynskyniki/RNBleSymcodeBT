@@ -197,14 +197,19 @@ class SymCodeSpp(val cntx: Application) {
   }
 
   fun connect(mac: String): Boolean {
-    log("connect ${mac}")
-    val dev = BluetoothAdapter.getDefaultAdapter()!!.getRemoteDevice(mac)
+    log("connect ${mac}");
+    val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
+    if (!bluetoothAdapter.isEnabled) {
+      log("bluetooth выключен")
+      return false
+    }
+    val dev = bluetoothAdapter!!.getRemoteDevice(mac)
     log("Bluetooth adapter available,${dev.name}");
 
     if (!isPaired(mac) || dev === null) {
       return false
     }
-
 
     dev.let { device ->
       log("Target Bluetooth device found  ${dev.getName()}")
