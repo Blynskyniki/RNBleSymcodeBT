@@ -8,9 +8,14 @@ import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import java.io.BufferedReader
 import java.io.IOException
@@ -37,7 +42,8 @@ class SymCodeSpp(val cntx: Application) {
   private var btSocket: BluetoothSocket? = null
   private var reader: BufferedReader? = null
   private var notifyTask: Thread? = null
-
+  val REQUEST_CODE_OPEN_GPS = 1
+  val REQUEST_CODE_PERMISSION_LOCATION = 2
   var list = mutableSetOf<BluetoothDevice>()
 
   init {
@@ -54,8 +60,8 @@ class SymCodeSpp(val cntx: Application) {
     Log.e("ru.lad24.sppSymcode", str)
   }
 
-
   fun enableBt(cb: (succes: Boolean) -> Unit) {
+
     val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
     if (bluetoothAdapter.isEnabled) {
@@ -98,6 +104,7 @@ class SymCodeSpp(val cntx: Application) {
   fun searchDevices(cb: (devices: HashSet<BluetoothDevice>) -> Unit) {
     try {
       list.clear()
+
       BluetoothAdapter.getDefaultAdapter()?.startDiscovery()
 
       val filter = IntentFilter().apply {
@@ -287,7 +294,6 @@ class SymCodeSpp(val cntx: Application) {
       return
     }
   }
-
 
 
   private fun checkPermissions(cntx: Context) {

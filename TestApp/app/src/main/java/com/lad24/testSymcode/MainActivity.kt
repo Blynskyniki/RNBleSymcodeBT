@@ -42,6 +42,11 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     scaner = SymCodeSpp(application)
+//    onPermissionGranted( Manifest.permission.ACCESS_FINE_LOCATION)
+//checkGPSIsOpen()
+//    val permissionCheck: Int = ContextCompat.checkSelfPermission(this,  Manifest.permission.ACCESS_FINE_LOCATION)
+//    log(  " location ${permissionCheck ===PackageManager.PERMISSION_GRANTED}")
+
     setContent {
 //      checkPermissions()
       SymcodeView(application)
@@ -251,11 +256,11 @@ class MainActivity : ComponentActivity() {
           .setMessage("надо включить")
           .setNegativeButton("нет",
             { dialog, which -> finish() })
-          .setPositiveButton("да",
-            { dialog, which ->
-              val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-              startActivityForResult(intent, REQUEST_CODE_OPEN_GPS)
-            })
+          .setPositiveButton("да"
+          ) { dialog, which ->
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            startActivityForResult(intent, REQUEST_CODE_OPEN_GPS)
+          }
           .setCancelable(false)
           .show()
       }

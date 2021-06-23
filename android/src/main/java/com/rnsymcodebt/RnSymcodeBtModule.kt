@@ -1,8 +1,10 @@
 package com.rnsymcodebt
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.location.LocationManager
 import android.util.Log
 import androidx.annotation.Nullable
 import com.facebook.react.bridge.*
@@ -13,6 +15,7 @@ import java.lang.Exception
 class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
   val driver by lazy { SymCodeSpp.getInstance(reactContext.applicationContext as Application) }
+  val cntx by lazy { reactContext.applicationContext as Application }
   override fun getName(): String {
     return "RnSymcodeBt"
   }
@@ -50,11 +53,22 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
       .emit(eventName, params)
   }
 
+  @SuppressLint("WrongConstant")
+  private fun checkGPSIsOpen(): Boolean {
+    val locationManager = cntx.getSystemService(LocationManager.KEY_LOCATION_CHANGED) as LocationManager
+    return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+  }
+
   @ReactMethod
   fun enableBluetooth(promise: Promise) {
-    driver.enableBt {
-      promise.resolve(it)
+    if (!checkGPSIsOpen()) {
+      promise.reject(Exception("Требуется включить GPS"))
+    } else {
+      driver.enableBt {
+        promise.resolve(it)
+      }
     }
+
   }
 
 

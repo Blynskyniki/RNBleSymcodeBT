@@ -6,13 +6,24 @@ const BARCODE_SCAN_NOTIFY_EVENT_NAME = 'BARCODE_SCAN_NOTIFY_EVENT';
 
 export type  Device = Record<'name' | 'mac' | 'bondState', string>;
 
+export function sleep<T>(ms: number, value?: T) {
+  return new Promise<T>(resolve => {
+    setTimeout(() => {
+      resolve(value as any);
+    }, ms);
+  });
+}
+
+const ONE_MINUTE = 1000 * 60;
+
 export default class SymcodeDriver {
   public async enableBluetooth(): Promise<boolean> {
     return android.enableBluetooth();
   }
 
-  public async searchDevices(): Promise<Device[]> {
-    return android.searchDevices();
+  public async searchDevices(timeout?: number): Promise<Device[]> {
+    return Promise.race([android.searchDevices(), sleep<Device[]>(timeout || ONE_MINUTE, [])]);
+
   }
 
   public async isPaired(mac: string): Promise<boolean> {
