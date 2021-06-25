@@ -8,14 +8,9 @@ import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.location.LocationManager
-import android.os.Build
-import android.provider.Settings
 import android.util.Log
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import java.io.BufferedReader
 import java.io.IOException
@@ -28,7 +23,6 @@ import java.util.*
 class SymCodeSpp(val cntx: Application) {
   companion object {
     private var instance: SymCodeSpp? = null;
-
     fun getInstance(cntx: Application): SymCodeSpp {
       if (this.instance == null) {
         this.instance = SymCodeSpp(cntx)
@@ -42,10 +36,14 @@ class SymCodeSpp(val cntx: Application) {
   private var btSocket: BluetoothSocket? = null
   private var reader: BufferedReader? = null
   private var notifyTask: Thread? = null
-  val REQUEST_CODE_OPEN_GPS = 1
-  val REQUEST_CODE_PERMISSION_LOCATION = 2
-  var list = mutableSetOf<BluetoothDevice>()
+  private var discoveryReceiver: BroadcastReceiver? = null;
+  private var bondReceiver: BroadcastReceiver? = null;
+  private var mConnectReceiver: BroadcastReceiver? = null;
 
+  private var btConnectedAddress = mutableListOf<String>()
+
+
+  var list = mutableSetOf<BluetoothDevice>()
 
   init {
 
@@ -53,8 +51,7 @@ class SymCodeSpp(val cntx: Application) {
       log("Нет доступа к устройству")
       throw Exception("Нет доступа к устройству")
     }
-
-
+    this.registerBTChecker()
   }
 
   private fun log(str: String) {
@@ -108,6 +105,59 @@ class SymCodeSpp(val cntx: Application) {
 
   }
 
+  private fun registerBTChecker() {
+    val filter = IntentFilter().apply {
+      addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+      addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
+      addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED)
+    }
+    mConnectReceiver = object : BroadcastReceiver() {
+      override fun onReceive(context: Context, intent: Intent) {
+        val action: String = intent.action!!
+        val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+
+        when (action) {
+          BluetoothDevice.ACTION_ACL_CONNECTED -> {
+            log("ACTION_ACL_CONNECTED ? " + device.name)
+            btConnectedAddress.add(device.address)
+
+          }
+          BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
+            log("ACTION_ACL_DISCONNECTED " + device.name + "res = ")
+            log("before " + btConnectedAddress.size)
+            btConnectedAddress.remove(device.address)
+
+            log("after " + btConnectedAddress.size)
+
+
+          }
+          BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED -> {
+            log(
+              "ACTION_ACL_DISCONNECT_REQUESTED " + device.name + "res = " + btConnectedAddress.remove(
+                device.address
+              )
+            )
+
+
+          }
+
+        }
+      }
+    }
+
+    cntx.registerReceiver(mConnectReceiver, filter)
+    log("mConnectReceiver registered")
+
+  }
+
+  private fun unRegisterBTChecker() {
+    mConnectReceiver.let {
+
+      cntx.unregisterReceiver(it)
+    }
+
+  }
+
 
   fun searchDevices(cb: (devices: HashSet<BluetoothDevice>) -> Unit) {
     try {
@@ -120,7 +170,7 @@ class SymCodeSpp(val cntx: Application) {
         addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
         addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
       }
-      cntx.registerReceiver(object : BroadcastReceiver() {
+      discoveryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
           val action: String = intent.action!!
           when (action) {
@@ -133,6 +183,7 @@ class SymCodeSpp(val cntx: Application) {
               }
 
               cb(filteredDevices)
+              cntx.unregisterReceiver(discoveryReceiver)
             }
             BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
               log("ACTION_DISCOVERY_STARTED")
@@ -144,7 +195,8 @@ class SymCodeSpp(val cntx: Application) {
             }
           }
         }
-      }, filter)
+      }
+      cntx.registerReceiver(discoveryReceiver, filter)
     } catch (e: Error) {
       log("${e.message}");
     }
@@ -163,7 +215,7 @@ class SymCodeSpp(val cntx: Application) {
       addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
       addAction(ACTION_PAIRING_REQUEST)
     }
-    cntx.registerReceiver(object : BroadcastReceiver() {
+    bondReceiver = object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
         val action: String = intent.action!!
         when (action) {
@@ -173,6 +225,7 @@ class SymCodeSpp(val cntx: Application) {
             if (device.bondState == BluetoothDevice.BOND_BONDED) {
               log("pairing success")
               cb(null)
+              cntx.unregisterReceiver(bondReceiver)
             }
           }
           ACTION_PAIRING_REQUEST -> {
@@ -181,7 +234,8 @@ class SymCodeSpp(val cntx: Application) {
 
         }
       }
-    }, filter)
+    }
+    cntx.registerReceiver(bondReceiver, filter)
 
   }
 
@@ -219,12 +273,10 @@ class SymCodeSpp(val cntx: Application) {
     return device !== null && device.bondState == BluetoothDevice.BOND_BONDED
   }
 
-
-
   fun isConnected(mac: String): Boolean {
-    val device = BluetoothAdapter.getDefaultAdapter()!!.getRemoteDevice(mac)
-    return device !== null && device.bondState == BluetoothDevice.BOND_BONDED && reader !== null && btSocket !== null
+    return this.btConnectedAddress.contains(mac)
   }
+
 
   fun connect(mac: String): Boolean {
     log("connect ${mac}");
@@ -300,8 +352,12 @@ class SymCodeSpp(val cntx: Application) {
     notifyTask?.interrupt()
   }
 
-  fun dicsonnect() {
+  fun dicsonnect(unRegister: Boolean = false) {
     try {
+      if (unRegister) {
+        this.unRegisterBTChecker();
+      }
+
       this.disableNotify()
       btSocket!!.close()
     } catch (ex: IOException) {

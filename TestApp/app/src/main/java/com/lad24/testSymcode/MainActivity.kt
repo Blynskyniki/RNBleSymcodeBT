@@ -82,13 +82,13 @@ class MainActivity : ComponentActivity() {
 
 
       }
-      Column(Modifier.padding(all = 5.dp)) {
+      Column(Modifier.padding(all = 2.dp)) {
         Row(
           Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.SpaceAround
         ) {
 
-          SymcodeButton("Паринг с AA:A8:A3:00:94:6D") {
+          SymcodeButton("Паринг с ${MY_SSP_MAC}") {
             barcodeState.value = ""
 
             scaner.pairDevice("AA:A8:A3:00:94:6D") {
@@ -104,17 +104,19 @@ class MainActivity : ComponentActivity() {
 
 
       }
-      Column(Modifier.padding(all = 5.dp)) {
+
+
+      Column(Modifier.padding(all = 2.dp)) {
         Row(
           Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceAround
+          horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
           SymcodeButton("Connect") {
-            barcodeState.value = "Подключение...."
+            barcodeState.value = "Подключить"
             scaner = SymCodeSpp(c)
             if (scaner.connect(MY_SSP_MAC)) {
-              barcodeState.value = "Подключен"
+              barcodeState.value = "Сканер подключен"
             } else {
               barcodeState.value = "Не смог установить соединение :("
             }
@@ -123,7 +125,17 @@ class MainActivity : ComponentActivity() {
               barcodeState.value = it
             }
           }
-          SymcodeButton("Disconnect") {
+          SymcodeButton("check ") {
+            barcodeState.value = ""
+
+            if(scaner.isConnected(MY_SSP_MAC)) {
+              barcodeState.value = "check: Подключен"
+            }else{
+              barcodeState.value = "check: Не Подключен"
+            }
+
+          }
+          SymcodeButton("disconnect") {
             barcodeState.value = "Сканер отключен"
             try {
               scaner.disableNotify()
@@ -174,7 +186,6 @@ class MainActivity : ComponentActivity() {
 
 
       }
-
     }
   }
 

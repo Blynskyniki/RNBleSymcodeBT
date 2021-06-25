@@ -35,7 +35,7 @@ export default class SymcodeDriver {
   }
 
   public async isConnected(mac: string): Promise<boolean> {
-    return android.isPaired(mac);
+    return android.isConnected(mac);
   }
 
   public async pairDevice(mac: string): Promise<boolean> {
