@@ -46,6 +46,7 @@ class SymCodeSpp(val cntx: Application) {
   val REQUEST_CODE_PERMISSION_LOCATION = 2
   var list = mutableSetOf<BluetoothDevice>()
 
+
   init {
 
     if (BluetoothAdapter.getDefaultAdapter() == null) {
@@ -100,6 +101,13 @@ class SymCodeSpp(val cntx: Application) {
 
     }
   }
+
+  fun getPairedDevices(): Set<BluetoothDevice> {
+
+    return BluetoothAdapter.getDefaultAdapter().bondedDevices
+
+  }
+
 
   fun searchDevices(cb: (devices: HashSet<BluetoothDevice>) -> Unit) {
     try {
@@ -209,6 +217,13 @@ class SymCodeSpp(val cntx: Application) {
   fun isPaired(mac: String): Boolean {
     val device = BluetoothAdapter.getDefaultAdapter()!!.getRemoteDevice(mac)
     return device !== null && device.bondState == BluetoothDevice.BOND_BONDED
+  }
+
+
+
+  fun isConnected(mac: String): Boolean {
+    val device = BluetoothAdapter.getDefaultAdapter()!!.getRemoteDevice(mac)
+    return device !== null && device.bondState == BluetoothDevice.BOND_BONDED && reader !== null && btSocket !== null
   }
 
   fun connect(mac: String): Boolean {

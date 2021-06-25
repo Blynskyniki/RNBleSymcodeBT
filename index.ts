@@ -4,7 +4,7 @@ const android = NativeModules.RnSymcodeBt;
 
 const BARCODE_SCAN_NOTIFY_EVENT_NAME = 'BARCODE_SCAN_NOTIFY_EVENT';
 
-export type  Device = Record<'name' | 'mac' | 'bondState', string>;
+export type  Device = Record<'name' | 'mac', string> & Record<'isPaired', boolean>;
 
 export function sleep<T>(ms: number, value?: T) {
   return new Promise<T>(resolve => {
@@ -26,7 +26,15 @@ export default class SymcodeDriver {
 
   }
 
+  public async getPairedDevices(timeout?: number): Promise<Device[]> {
+    return Promise.race([android.getPairedDevices(), sleep<Device[]>(timeout || ONE_MINUTE, [])]);
+  }
+
   public async isPaired(mac: string): Promise<boolean> {
+    return android.isPaired(mac);
+  }
+
+  public async isConnected(mac: string): Promise<boolean> {
     return android.isPaired(mac);
   }
 

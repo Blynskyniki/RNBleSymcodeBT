@@ -42,13 +42,7 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     scaner = SymCodeSpp(application)
-//    onPermissionGranted( Manifest.permission.ACCESS_FINE_LOCATION)
-//checkGPSIsOpen()
-//    val permissionCheck: Int = ContextCompat.checkSelfPermission(this,  Manifest.permission.ACCESS_FINE_LOCATION)
-//    log(  " location ${permissionCheck ===PackageManager.PERMISSION_GRANTED}")
-
     setContent {
-//      checkPermissions()
       SymcodeView(application)
     }
   }
@@ -74,8 +68,10 @@ class MainActivity : ComponentActivity() {
             barcodeState.value = ""
 
             scaner.enableBt {
+              val paired = scaner.getPairedDevices()
+              barcodeState.value =  "Paired: \n " +  paired.map { "${it.name} ${it.address}  \n" }.toString()
               scaner.searchDevices() {
-                barcodeState.value = it.map { "${it.name} ${it.address}  \n" }.toString()
+                barcodeState.value = "discovery: \n" + it.map { "${it.name} ${it.address}  \n" }.toString()
 
               }
             }

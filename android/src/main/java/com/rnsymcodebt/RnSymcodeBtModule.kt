@@ -55,7 +55,8 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
 
   @SuppressLint("WrongConstant")
   private fun checkGPSIsOpen(): Boolean {
-    val locationManager = cntx.getSystemService(LocationManager.KEY_LOCATION_CHANGED) as LocationManager
+    val locationManager =
+      cntx.getSystemService(LocationManager.KEY_LOCATION_CHANGED) as LocationManager
     return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
   }
 
@@ -71,12 +72,33 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
 
   }
 
+  @ReactMethod
+  fun getPairedDevices(promise: Promise) {
+    handlePromiseWrapper(promise) {
+
+      val devices = driver.getPairedDevices()
+      val arr = WritableNativeArray()
+      devices.forEach {
+        arr.pushMap(Arguments.createMap().apply {
+          putString("name", it.name)
+          putString("mac", it.address)
+          putBoolean("isPaired", it.bondState.equals(BluetoothDevice.BOND_BONDED))
+        })
+      }
+      promise.resolve(arr)
+    }
+  }
 
   @ReactMethod
   fun isPaired(mac: String, promise: Promise) {
     handlePromiseWrapper(promise) {
-
       promise.resolve(driver.isPaired(mac))
+    }
+  }
+  @ReactMethod
+  fun isConnected(mac: String, promise: Promise) {
+    handlePromiseWrapper(promise) {
+      promise.resolve(driver.isConnected(mac))
     }
   }
 
@@ -90,7 +112,8 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
           arr.pushMap(Arguments.createMap().apply {
             putString("name", d.name)
             putString("mac", d.address)
-            putString("bondState", d.bondState.toString())
+            putBoolean("isPaired", d.bondState.equals(BluetoothDevice.BOND_BONDED))
+
           })
         }
         log("${arr}")
