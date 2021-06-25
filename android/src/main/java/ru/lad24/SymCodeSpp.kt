@@ -123,11 +123,8 @@ class SymCodeSpp(val cntx: Application) {
 
           }
           BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
-            log("ACTION_ACL_DISCONNECTED " + device.name + "res = ")
-            log("before " + btConnectedAddress.size)
+            log("ACTION_ACL_DISCONNECTED " + device.name)
             btConnectedAddress.remove(device.address)
-
-            log("after " + btConnectedAddress.size)
 
 
           }
