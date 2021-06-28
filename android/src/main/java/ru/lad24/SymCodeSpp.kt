@@ -301,24 +301,24 @@ class SymCodeSpp(val cntx: Application) {
       }
       log("Created a bluetooth socket. ");
       btSocket?.let { bluetoothSocket ->
-        for (i in 1..5) {
+//        for (i in 1..5) {
           try {
             btSocket!!.connect()
             reader = BufferedReader(InputStreamReader(bluetoothSocket.inputStream, "ASCII"))
 
-            break
+//            break
           } catch (ex: IOException) {
-            if (i < 5) {
-              log("Failed to connect. Retrying: $ex")
-              continue
-            }
+//            if (i < 5) {
+//              log("Failed to connect. Retrying: $ex")
+//              continue
+//            }
             log("Failed to connect: $ex")
             return false
           }
         }
 
       }
-    }
+//    }
 
 
     return true
