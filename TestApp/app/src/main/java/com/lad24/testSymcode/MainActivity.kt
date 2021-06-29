@@ -41,8 +41,8 @@ class MainActivity : ComponentActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    scaner = SymCodeSpp(application)
     setContent {
-      checkPermissions()
       SymcodeView(application)
     }
   }
@@ -66,28 +66,33 @@ class MainActivity : ComponentActivity() {
 
           SymcodeButton("Сканирование") {
             barcodeState.value = ""
-            scaner = SymCodeSpp(c)
-            scaner.searchDevices(){
-              barcodeState.value = it.map {  "${it.name} ${it.address}  \n" }.toString()
 
+            scaner.enableBt {
+              val paired = scaner.getPairedDevices()
+              barcodeState.value =  "Paired: \n " +  paired.map { "${it.name} ${it.address}  \n" }.toString()
+              scaner.searchDevices() {
+                barcodeState.value = "discovery: \n" + it.map { "${it.name} ${it.address}  \n" }.toString()
+
+              }
             }
+
 
           }
         }
 
 
       }
-      Column(Modifier.padding(all = 5.dp)) {
+      Column(Modifier.padding(all = 2.dp)) {
         Row(
           Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.SpaceAround
         ) {
 
-          SymcodeButton("Паринг с AA:A8:A3:00:94:6D") {
+          SymcodeButton("Паринг с ${MY_SSP_MAC}") {
             barcodeState.value = ""
 
-            scaner.pairDevice("AA:A8:A3:00:94:6D"){
-              if(it !== null){
+            scaner.pairDevice("AA:A8:A3:00:94:6D") {
+              if (it !== null) {
                 barcodeState.value = it.message.toString()
                 return@pairDevice
               }
@@ -99,17 +104,20 @@ class MainActivity : ComponentActivity() {
 
 
       }
-      Column(Modifier.padding(all = 5.dp)) {
+
+
+      Column(Modifier.padding(all = 2.dp)) {
         Row(
           Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceAround
+          horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
           SymcodeButton("Connect") {
-            barcodeState.value = "Подключение...."
+            barcodeState.value = "Подключить"
             scaner = SymCodeSpp(c)
-            if (scaner.connect(MY_SSP_MAC)) {
-              barcodeState.value = "Подключен"
+            scaner.asyncConnectWithTimeout(MY_SSP_MAC,2000)
+            if (scaner.isConnected(MY_SSP_MAC)) {
+              barcodeState.value = "Сканер подключен"
             } else {
               barcodeState.value = "Не смог установить соединение :("
             }
@@ -118,7 +126,17 @@ class MainActivity : ComponentActivity() {
               barcodeState.value = it
             }
           }
-          SymcodeButton("Disconnect") {
+          SymcodeButton("check ") {
+            barcodeState.value = ""
+
+            if(scaner.isConnected(MY_SSP_MAC)) {
+              barcodeState.value = "check: Подключен"
+            }else{
+              barcodeState.value = "check: Не Подключен"
+            }
+
+          }
+          SymcodeButton("disconnect") {
             barcodeState.value = "Сканер отключен"
             try {
               scaner.disableNotify()
@@ -169,7 +187,6 @@ class MainActivity : ComponentActivity() {
 
 
       }
-
     }
   }
 
@@ -247,11 +264,11 @@ class MainActivity : ComponentActivity() {
           .setMessage("надо включить")
           .setNegativeButton("нет",
             { dialog, which -> finish() })
-          .setPositiveButton("да",
-            { dialog, which ->
-              val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-              startActivityForResult(intent, REQUEST_CODE_OPEN_GPS)
-            })
+          .setPositiveButton("да"
+          ) { dialog, which ->
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            startActivityForResult(intent, REQUEST_CODE_OPEN_GPS)
+          }
           .setCancelable(false)
           .show()
       }
