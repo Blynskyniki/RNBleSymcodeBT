@@ -352,18 +352,17 @@ class SymCodeSpp(val cntx: Application) {
       task.start()
       log("Wait to connect");
       Thread.sleep(timeoutInMs.toLong());
-      task.interrupt()
-      btSocket?.close()
+// если таска еще живая, значит убиваем
+      if (task.isAlive) {
+        log("task alive, closing task and btSocket");
+        btSocket?.close()
+        task.interrupt()
+      }
 
-      log("btSocket ${btSocket !== null}");
-      log("conn ${btSocket}");
-      log("Wait complied");
+      log("Wait complied, return");
 
     }
 
-
-
-    return
   }
 
   fun backgroundTaskConnect(): Thread {
@@ -373,16 +372,16 @@ class SymCodeSpp(val cntx: Application) {
       btSocket?.let { bluetoothSocket ->
 
         try {
-          log("Attempt to open socket to bluetooth device.... ${bluetoothSocket.inputStream !== null}");
+          log("Attempt to open socket to bluetooth device.... ");
           bluetoothSocket.connect()
           reader = BufferedReader(InputStreamReader(bluetoothSocket.inputStream, "ASCII"))
           log("Bluetooth socket opened ${bluetoothSocket.inputStream !== null}");
 
-
+          return@Thread
         } catch (ex: IOException) {
 
           log("Failed to open bluetooth socket: ${ex.message}")
-          return@Thread
+
         }
       }
     }
