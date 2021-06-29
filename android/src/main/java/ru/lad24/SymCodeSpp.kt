@@ -39,7 +39,7 @@ class SymCodeSpp(val cntx: Application) {
   private var discoveryReceiver: BroadcastReceiver? = null;
   private var bondReceiver: BroadcastReceiver? = null;
   private var mConnectReceiver: BroadcastReceiver? = null;
-
+  private var isConnected: Boolean = false
   private var btConnectedAddress = mutableListOf<String>()
 
 
@@ -301,27 +301,92 @@ class SymCodeSpp(val cntx: Application) {
       }
       log("Created a bluetooth socket. ");
       btSocket?.let { bluetoothSocket ->
-//        for (i in 1..5) {
-          try {
-            btSocket!!.connect()
-            reader = BufferedReader(InputStreamReader(bluetoothSocket.inputStream, "ASCII"))
 
-//            break
-          } catch (ex: IOException) {
-//            if (i < 5) {
-//              log("Failed to connect. Retrying: $ex")
-//              continue
-//            }
-            log("Failed to connect: $ex")
-            return false
-          }
+        try {
+          btSocket!!.connect()
+          reader = BufferedReader(InputStreamReader(bluetoothSocket.inputStream, "ASCII"))
+
+
+        } catch (ex: IOException) {
+
+          log("Failed to connect: $ex")
+          return false
         }
-
       }
+
+    }
 //    }
 
 
     return true
+  }
+
+  //   Для фонового подключения
+  fun asyncConnectWithTimeout(mac: String, timeoutInMs: Int) {
+    log("Bluetooth connect ${mac}");
+    val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
+    if (!bluetoothAdapter.isEnabled) {
+      log("Bluetooth отключен")
+      return
+    }
+    val dev = bluetoothAdapter!!.getRemoteDevice(mac)
+    log("Bluetooth adapter available,${dev.name}");
+
+    if (!isPaired(mac) || dev === null) {
+      return
+    }
+
+    dev.let { device ->
+      log("Target Bluetooth device found  ${device.getName()}")
+      try {
+        btSocket = device.createRfcommSocketToServiceRecord(MY_UUID_SECURE)
+        log("Bluetooth RfcommSocketToServiceRecord created ")
+
+      } catch (ex: IOException) {
+        log("Failed to create RfComm socket: " + ex.toString());
+        return
+      }
+// выполняем попытку подключения в отдельном потоке
+      val task = backgroundTaskConnect()
+      task.start()
+      log("Wait to connect");
+      Thread.sleep(timeoutInMs.toLong());
+      task.interrupt()
+      btSocket?.close()
+
+      log("btSocket ${btSocket !== null}");
+      log("conn ${btSocket}");
+      log("Wait complied");
+
+    }
+
+
+
+    return
+  }
+
+  fun backgroundTaskConnect(): Thread {
+    return Thread() {
+
+
+      btSocket?.let { bluetoothSocket ->
+
+        try {
+          log("Attempt to open socket to bluetooth device.... ${bluetoothSocket.inputStream !== null}");
+          bluetoothSocket.connect()
+          reader = BufferedReader(InputStreamReader(bluetoothSocket.inputStream, "ASCII"))
+          log("Bluetooth socket opened ${bluetoothSocket.inputStream !== null}");
+
+
+        } catch (ex: IOException) {
+
+          log("Failed to open bluetooth socket: ${ex.message}")
+          return@Thread
+        }
+      }
+    }
+
   }
 
   fun enableNotify(notifyCb: (message: String) -> Unit) {

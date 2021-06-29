@@ -147,7 +147,16 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
       promise.reject("404", "Устрройство не найдено. Выполните поиск устройств заново")
     }
   }
-
+  @ReactMethod
+  fun asyncConnectWithTimeout(mac: String, timeoutInMs:Int,promise: Promise) {
+    handlePromiseWrapper(promise) {
+      driver.asyncConnectWithTimeout(mac,timeoutInMs)
+      if (driver.isConnected(mac)) {
+        promise.resolve(true)
+      }
+      promise.reject("404", "Устрройство не найдено. Выполните поиск устройств заново")
+    }
+  }
 
   @ReactMethod
   fun disconnect(promise: Promise) {

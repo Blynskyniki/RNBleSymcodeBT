@@ -45,6 +45,10 @@ export default class SymcodeDriver {
   public async connect(mac: string): Promise<boolean> {
     return android.connect(mac);
   }
+  // Использовать для подключения в фоне
+  public async asyncConnectWithTimeout(mac: string, timeoutInMs: number): Promise<void> {
+    return android.asyncConnectWithTimeout(mac);
+  }
 
   public async disconnect(): Promise<void> {
     await android.disconnect();

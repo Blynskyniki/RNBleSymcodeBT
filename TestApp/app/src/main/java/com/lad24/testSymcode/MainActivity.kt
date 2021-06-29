@@ -115,7 +115,8 @@ class MainActivity : ComponentActivity() {
           SymcodeButton("Connect") {
             barcodeState.value = "Подключить"
             scaner = SymCodeSpp(c)
-            if (scaner.connect(MY_SSP_MAC)) {
+            scaner.asyncConnectWithTimeout(MY_SSP_MAC,2000)
+            if (scaner.isConnected(MY_SSP_MAC)) {
               barcodeState.value = "Сканер подключен"
             } else {
               barcodeState.value = "Не смог установить соединение :("
