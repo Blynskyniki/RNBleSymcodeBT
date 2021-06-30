@@ -148,13 +148,10 @@ class RnSymcodeBtModule(reactContext: ReactApplicationContext) :
     }
   }
   @ReactMethod
-  fun asyncConnectWithTimeout(mac: String, timeoutInMs:Int,promise: Promise) {
+  fun asyncConnectWithTimeout(mac: String, promise: Promise) {
     handlePromiseWrapper(promise) {
-      driver.asyncConnectWithTimeout(mac,timeoutInMs)
-      if (driver.isConnected(mac)) {
+      driver.asyncConnectWithTimeout(mac)
         promise.resolve(true)
-      }
-      promise.reject("404", "Устрройство не найдено. Выполните поиск устройств заново")
     }
   }
 

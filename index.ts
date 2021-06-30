@@ -46,7 +46,7 @@ export default class SymcodeDriver {
     return android.connect(mac);
   }
   // Использовать для подключения в фоне
-  public async asyncConnectWithTimeout(mac: string, timeoutInMs: number): Promise<void> {
+  public async asyncConnectWithTimeout(mac: string): Promise<void> {
     return android.asyncConnectWithTimeout(mac);
   }
 

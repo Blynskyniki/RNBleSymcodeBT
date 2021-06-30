@@ -322,7 +322,7 @@ class SymCodeSpp(val cntx: Application) {
   }
 
   //   Для фонового подключения
-  fun asyncConnectWithTimeout(mac: String, timeoutInMs: Int) {
+  fun asyncConnectWithTimeout(mac: String) {
     log("Bluetooth connect ${mac}");
     val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
@@ -350,16 +350,6 @@ class SymCodeSpp(val cntx: Application) {
 // выполняем попытку подключения в отдельном потоке
       val task = backgroundTaskConnect()
       task.start()
-      log("Wait to connect");
-      Thread.sleep(timeoutInMs.toLong());
-// если таска еще живая, значит убиваем
-      if (task.isAlive) {
-        log("task alive, closing task and btSocket");
-        btSocket?.close()
-        task.interrupt()
-      }
-
-      log("Wait complied, return");
 
     }
 
