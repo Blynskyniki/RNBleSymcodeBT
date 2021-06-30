@@ -40,7 +40,7 @@ export default class SymcodeDriver {
 
   connect(mac: string): Promise<boolean>;
 
-  asyncConnectWithTimeout(mac: string, timeoutInMs: number): Promise<void>;
+  asyncConnectWithTimeout(mac: string): Promise<void>;
 
   disconnect(): Promise<void>;
 
