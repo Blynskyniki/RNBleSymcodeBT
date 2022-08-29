@@ -33,7 +33,9 @@
   "keywords": [
     "react-native",
     "ios",
-    "android"
+    "android",
+    "symcode",
+    "react-native"
   ],
   "repository": "https://github.com/Blynskyniki/RNBleSymcodeBT",
   "author": "Blynskyniki <blynskyniki@gmail.com> (https://github.com/Blynskyniki)",
