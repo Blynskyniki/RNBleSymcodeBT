@@ -1,4 +1,0 @@
-include ':RNSymcode'
-include ':app'
-project(':RNSymcode').projectDir = new File(rootDir, '../android/')
-rootProject.name = "RNSymcode"
