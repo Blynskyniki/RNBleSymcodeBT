@@ -114,7 +114,7 @@ class SymCodeSpp(val cntx: Application) {
     mConnectReceiver = object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
         val action: String = intent.action!!
-        val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+        val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) ?: return
 
         when (action) {
           BluetoothDevice.ACTION_ACL_CONNECTED -> {
@@ -186,9 +186,11 @@ class SymCodeSpp(val cntx: Application) {
               log("ACTION_DISCOVERY_STARTED")
             }
             BluetoothDevice.ACTION_FOUND -> {
-              val device: BluetoothDevice =
+              val device: BluetoothDevice? =
                 intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-              list.add(device)
+              if (device !== null) {
+                list.add(device)
+              }
             }
           }
         }
@@ -218,8 +220,8 @@ class SymCodeSpp(val cntx: Application) {
         when (action) {
           BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
             log("ACTION_BOND_STATE_CHANGED")
-            val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-            if (device.bondState == BluetoothDevice.BOND_BONDED) {
+            val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+            if (device !== null && device.bondState == BluetoothDevice.BOND_BONDED) {
               log("pairing success")
               cb(null)
               cntx.unregisterReceiver(bondReceiver)
